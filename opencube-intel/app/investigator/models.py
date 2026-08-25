@@ -58,6 +58,19 @@ class Run(BaseModel):
     geography: str
     provider_capabilities: list[str] = Field(default_factory=list)
 
+    # Optional Market Scout discovery metadata (reproducibility). Left
+    # optional so pre-existing persisted Run documents without these fields
+    # remain readable.
+    discovery_queries: list[str] | None = None
+    discovery_raw_candidate_count: int | None = None
+
+    # Optional run-lifecycle bookkeeping, populated once all of the Run's
+    # Investigations reach a terminal InvestigationStatus. Optional for the
+    # same backward-compatibility reason as the discovery fields above.
+    investigation_count: int | None = None
+    completed_investigation_count: int | None = None
+    failed_investigation_count: int | None = None
+
 
 class Business(BaseModel):
     """Canonical, reusable business record.
@@ -162,6 +175,10 @@ class UsageMetadata(BaseModel):
     """Auditable Gemini invocation accounting. No pricing is hardcoded."""
 
     investigation_id: str
+    # Optional: added so per-run token totals don't require an N+1 join
+    # through Investigation. Optional so the three pre-existing V1 usage
+    # documents that carry only investigation_id remain readable.
+    run_id: str | None = None
     model: str
     prompt_tokens: int | None = None
     output_tokens: int | None = None

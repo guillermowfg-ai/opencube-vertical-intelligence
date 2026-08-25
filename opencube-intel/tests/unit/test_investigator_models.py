@@ -249,6 +249,33 @@ def test_investigation_result_rejects_evidence_from_wrong_investigation() -> Non
         )
 
 
+def test_usage_metadata_run_id_optional_for_legacy_documents() -> None:
+    """The three pre-existing V1 usage documents carry only investigation_id;
+    they must still parse into UsageMetadata without a run_id field."""
+    legacy_doc = {
+        "investigation_id": INVESTIGATION_ID,
+        "model": "gemini-3.6-flash",
+        "prompt_tokens": 10,
+        "output_tokens": 5,
+        "thought_tokens": 0,
+        "total_tokens": 15,
+        "timestamp": "2026-08-01T00:00:00Z",
+        "invocation_id": "legacy-inv",
+    }
+    usage = UsageMetadata(**legacy_doc)
+    assert usage.run_id is None
+
+
+def test_usage_metadata_accepts_run_id() -> None:
+    usage = UsageMetadata(
+        investigation_id=INVESTIGATION_ID,
+        run_id=RUN_ID,
+        model="gemini-3.6-flash",
+        timestamp="2026-08-25T00:01:00Z",
+    )
+    assert usage.run_id == RUN_ID
+
+
 def test_investigation_result_rejects_duplicate_evidence_ids() -> None:
     ev1 = _evidence("ev-1")
     ev2 = _evidence("ev-1")

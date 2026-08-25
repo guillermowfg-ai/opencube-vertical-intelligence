@@ -84,6 +84,23 @@ def get_investigation(investigation_id: str) -> dict | None:
     return doc.to_dict() if doc.exists else None
 
 
+def list_businesses_for_run(run_id: str) -> list[dict]:
+    """Businesses in this run's scan, derived via its Investigation records
+    (Business itself intentionally carries no run_id — DECISIONS.md)."""
+    investigations = list_investigations_for_run(run_id)
+    businesses = []
+    for inv in investigations:
+        business = get_business(inv["business_id"])
+        if business is not None:
+            businesses.append(business)
+    return businesses
+
+
+def list_investigations_for_run(run_id: str) -> list[dict]:
+    query = get_client().collection(INVESTIGATIONS).where("run_id", "==", run_id)
+    return [d.to_dict() for d in query.stream()]
+
+
 def list_evidence_for_run(run_id: str) -> list[dict]:
     query = get_client().collection(EVIDENCE).where("run_id", "==", run_id)
     return [d.to_dict() for d in query.stream()]
@@ -112,4 +129,11 @@ def list_usage_for_investigation(investigation_id: str) -> list[dict]:
     query = get_client().collection(USAGE).where(
         "investigation_id", "==", investigation_id
     )
+    return [d.to_dict() for d in query.stream()]
+
+
+def list_usage_for_run(run_id: str) -> list[dict]:
+    """Aggregate usage lookup by run_id (avoids the N+1 join through
+    Investigation that investigation_id-only usage documents required)."""
+    query = get_client().collection(USAGE).where("run_id", "==", run_id)
     return [d.to_dict() for d in query.stream()]

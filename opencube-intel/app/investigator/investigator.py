@@ -33,6 +33,7 @@ from app.investigator.models import (
     OpportunityHypothesis,
     OpportunityStatus,
     Run,
+    RunStatus,
     UsageMetadata,
 )
 
@@ -86,20 +87,34 @@ def run_investigation(
     business: Business,
     definitions: list[OpportunityDefinition],
     *,
+    investigation: Investigation | None = None,
     persist: bool = True,
 ) -> InvestigationResult:
-    investigation = Investigation(
-        investigation_id=str(uuid.uuid4()),
-        run_id=run.run_id,
-        business_id=business.business_id,
-        created_at=_now(),
-        status=InvestigationStatus.IN_PROGRESS,
-    )
+    """Run one complete investigation for `business` under `run`.
 
-    if persist:
+    `investigation` may be a pre-created, already-persisted Investigation
+    (e.g. from a batch runner that must create the run/business-membership
+    record before any failable retrieval or reasoning work begins). When
+    omitted, this function creates and persists its own Investigation record
+    exactly as V1 always did, so existing callers are unaffected.
+    """
+    if investigation is None:
+        investigation = Investigation(
+            investigation_id=str(uuid.uuid4()),
+            run_id=run.run_id,
+            business_id=business.business_id,
+            created_at=_now(),
+            status=InvestigationStatus.IN_PROGRESS,
+        )
+        if persist:
+            firestore_store.save_run(run)
+            firestore_store.save_business(business)
+            firestore_store.save_investigation(investigation)
+    elif persist:
+        # Caller already created and persisted the Investigation record
+        # before this call — do not write a duplicate.
         firestore_store.save_run(run)
         firestore_store.save_business(business)
-        firestore_store.save_investigation(investigation)
 
     sources = public_web_fetcher.fetch_business_sources(business.website_url or "")
 
@@ -112,6 +127,7 @@ def run_investigation(
 
         usage = UsageMetadata(
             investigation_id=investigation.investigation_id,
+            run_id=run.run_id,
             model=call_result.model,
             prompt_tokens=call_result.prompt_tokens,
             output_tokens=call_result.output_tokens,
@@ -180,3 +196,28 @@ def run_investigation(
         contact_reason=contact_reason,
     )
     return result
+
+
+def finalize_run(run: Run, investigations: list[Investigation]) -> Run:
+    """Advance `run.status` to a terminal state once all of its Investigations
+    are themselves terminal (COMPLETED or FAILED).
+
+    A Run whose Investigations include any technical failure must not be
+    reported as a fully successful run — that fact stays visible on the Run
+    itself (not only buried in individual Investigation records), while each
+    failed Investigation remains independently auditable via its own
+    InvestigationStatus. Mutates and returns `run`; does not persist it —
+    callers (e.g. the batch runner) decide when/whether to write it.
+    """
+    terminal_statuses = {InvestigationStatus.COMPLETED, InvestigationStatus.FAILED}
+    if not investigations or any(i.status not in terminal_statuses for i in investigations):
+        return run
+
+    completed = sum(1 for i in investigations if i.status == InvestigationStatus.COMPLETED)
+    failed = sum(1 for i in investigations if i.status == InvestigationStatus.FAILED)
+
+    run.investigation_count = len(investigations)
+    run.completed_investigation_count = completed
+    run.failed_investigation_count = failed
+    run.status = RunStatus.COMPLETED if failed == 0 else RunStatus.FAILED
+    return run
