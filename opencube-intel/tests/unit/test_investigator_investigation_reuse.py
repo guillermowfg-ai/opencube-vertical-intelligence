@@ -1,7 +1,13 @@
 from app.investigator import gemini_reasoner, investigator, public_web_fetcher
 from app.investigator.catalog import ONLINE_BOOKING_FRICTION
 from app.investigator.gemini_reasoner import GeminiCallResult
-from app.investigator.models import Business, Investigation, InvestigationStatus, Run, RunStatus
+from app.investigator.models import (
+    Business,
+    Investigation,
+    InvestigationStatus,
+    Run,
+    RunStatus,
+)
 
 RUN_ID = "run-1"
 
