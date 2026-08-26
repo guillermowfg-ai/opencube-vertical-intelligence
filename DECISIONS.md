@@ -100,3 +100,110 @@
     fields so Investigator-evidence and Verification-evidence provenance is never merged. Match
     decisions are commercial-eligibility outputs, not epistemic rewrites, and `MATCHED` does not
     mean contact authorization — that remains the future Human Gate's responsibility.
+
+## Production Execution V1 Decisions
+
+22. **Firestore is canonical workflow state; ADK sessions are execution support.** Run, Business,
+    Investigation, Evidence, OpportunityHypothesis, Verification and OpportunityMatch live in flat
+    Firestore collections and are the only durable record of a run. Nothing in the asynchronous
+    path reads or writes ADK in-memory session state, so any Cloud Run instance can serve any task
+    for any run, and an instance dying loses no workflow state.
+
+23. **One business investigation task = one business, and `POST /runs` never investigates.**
+    `POST /runs` validates, persists a `QUEUED` Run, enqueues one SCOUT task and returns 202 —
+    typically in well under a second. SCOUT discovers, pre-creates every Investigation, commits the
+    readiness barrier, then fans out one Cloud Task per business. Business tasks call the accepted
+    `investigator.run_investigation` directly; `batch_runner.run_batch` remains the local sequential
+    loop and is not used in the cloud path.
+
+24. **Progress is derived by query, never stored as a counter.** Under at-least-once Cloud Tasks
+    delivery an incremented counter is the single largest duplication hazard: one redelivery
+    silently corrupts it forever. `GET /runs/{run_id}` therefore counts Investigations,
+    Verifications and Matches at read time. The consequence is that Production Execution V1 needs
+    no Firestore transaction anywhere — the Run document is written only by `POST /runs`, by SCOUT,
+    and by FINALIZE, which never run concurrently.
+
+25. **Finalization is scheduled exactly once by Cloud Tasks deterministic naming, not by a
+    Firestore flag.** Every business worker that observes all Investigations terminal tries to
+    create a task named `finalize-{run_id}`; Cloud Tasks admits one and returns `AlreadyExists` to
+    the rest, which is swallowed as the success signal it is. A transactional
+    `finalization_enqueued` flag was rejected because the flag commit and the enqueue are not one
+    atomic operation: a worker that died between them would strand the run forever with every other
+    worker already convinced it had lost the race. Nothing is committed before the enqueue here, so
+    the recovery path is simply the next worker — or the ordinary Cloud Tasks retry.
+    `finalize_enqueued_at` is audit metadata and is never read for control flow.
+
+26. **`businesses_total` proves discovery finished, not that dispatch finished — so SCOUT replays
+    dispatch in full.** SCOUT has two phases: discovery + canonical persistence (one-shot, guarded
+    by `businesses_total is not None`) and business-task dispatch (replayable). A first attempt can
+    create three of ten tasks and then hit a transport error; a retry rebuilds the dispatch set from
+    the persisted Investigations, never re-calls Places, and attempts all ten deterministic task
+    names — the existing ones return `AlreadyExists`, the missing ones are created. A dispatch
+    failure never rolls back Businesses, Investigations or `businesses_total`. Treating
+    `businesses_total` as "nothing left to do" would have stranded runs with IN_PROGRESS
+    Investigations no worker was ever asked to run.
+
+27. **Deterministic IDs where duplication would be structural; UUIDs left alone where it would
+    not.** `investigation_id` is `f"{run_id}__{business_id}"` so a redelivered SCOUT re-`set()`s the
+    same documents instead of creating a second, orphaned set that would permanently break the
+    `len(investigations) == businesses_total` readiness check. `match_id == hypothesis_id` already
+    made the Matcher idempotent. Evidence, hypothesis and verification IDs remain UUIDs — see #29.
+
+28. **At-least-once delivery plus application-level duplicate suppression, with the suppression
+    points named.** SCOUT: deterministic investigation IDs and the `businesses_total` guard.
+    BUSINESS: a terminal-Investigation guard and a terminal-Run guard before any Gemini call, and a
+    200 response for analytical failure so failed reasoning is never retried at cost. FINALIZE: a
+    terminal-Run guard, plus skipping any hypothesis whose Verification already reached a terminal
+    execution status. A technically `FAILED` Verification counts as done and is never re-run: it is
+    already a legitimate terminal analytical state that the reconciliation matrix handles
+    explicitly, so re-running it would spend two more Gemini calls to reach the same recorded
+    conclusion. Only `IN_PROGRESS` orphans left by a killed FINALIZE are re-attempted; the orphan
+    record is preserved, never mutated or deleted, and `latest_verification_by_hypothesis`
+    supersedes it.
+
+29. **Known V1 limitation: an instance killed mid-investigation can produce duplicate Evidence.**
+    Such an Investigation is left `IN_PROGRESS` with partial Evidence, Hypotheses and UsageMetadata
+    already written, so the terminal-status guard does not suppress the retry and the re-run writes
+    a second set with fresh UUIDs — yielding extra Hypotheses and therefore extra Matches for that
+    one business. The blast radius is bounded by `maxAttempts=3` and by a 600s dispatch deadline
+    against ~40–90s of real work. The proper fix is deterministic Evidence and Hypothesis IDs
+    derived from `(investigation_id, opportunity_id, source_url)`, which would touch the frozen
+    provenance model and is deliberately out of scope for this milestone. Recorded rather than
+    papered over.
+
+30. **A run with a failed business still produces results, and is still reported as `FAILED`.**
+    A `FAILED` Investigation is terminal, so nine completed plus one failed passes the readiness
+    check and FINALIZE runs Verification and the Matcher over every persisted hypothesis. The frozen
+    `finalize_run` rule is preserved untouched — any failed Investigation means the Run is not a
+    fully successful run — so the terminal status is `FAILED` even though the useful output exists.
+    A `COMPLETED_WITH_ERRORS` status was rejected: it would edit an accepted module and invalidate
+    accepted tests. The honest picture is carried instead by `completed_investigation_count`,
+    `failed_investigation_count` and `matches_total`, which the API returns and the frontend renders.
+
+31. **`RunStatus` is workflow vocabulary and was extended; no second state field was added.**
+    `QUEUED`, `DISCOVERING`, `INVESTIGATING` and `FINALIZING` were added alongside the retained
+    `CREATED`/`IN_PROGRESS` (which keep the accepted reference run and the local proof scripts
+    readable). `COMPLETED` and `FAILED` remain the only terminal values and `finalize_run` remains
+    their only writer in the normal path. A parallel `phase` field was rejected as two overlapping
+    state machines for a frontend to reconcile. Every new `Run` field is optional with a `None`
+    default, so no migration is required and pre-existing Run documents stay readable.
+
+32. **The task-endpoint security boundary is Cloud Run IAM, not a header.** The service stays
+    private with no `allUsers` binding; only the runtime service account holds `run.invoker`, scoped
+    to this one service. Cloud Tasks signs each delivery with an OIDC token for that same account.
+    The `X-CloudTasks-TaskName` check in the handlers is hygiene that makes an accidental
+    hand-rolled call obvious — it is trivially spoofable and is never the access control. A
+    dedicated task-caller service account was deferred, not dismissed: it would narrow the blast
+    radius but costs infrastructure time this milestone did not have.
+
+33. **`run_events` was cut.** The derived progress fields already drive a live progress view, and
+    Cloud Logging carries the technical narrative. A parallel event collection would have meant a
+    write at every step of every handler plus ordering and dedup questions under at-least-once
+    delivery, for information the frontend can already render.
+
+34. **Orchestration transports execution; it never reinterprets an analytical result.**
+    `run_orchestrator` calls the accepted engines unmodified and writes only runs, businesses,
+    investigations and matches — never a hypothesis, verification, evidence or usage document of its
+    own. `tests/unit/test_orchestrator_semantics.py` enforces this structurally, asserting via AST
+    that the module neither calls the forbidden `firestore_store` writers nor references
+    `MatchStatus`, `MatchReasonCode` or `VerificationOutcome` in code.
