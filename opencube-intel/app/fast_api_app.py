@@ -68,6 +68,15 @@ app: FastAPI = get_fast_api_app(
 app.title = "opencube-intel"
 app.description = "API for interacting with the Agent opencube-intel"
 
+# Production Execution V1: the public product API (/runs) and the internal
+# Cloud Tasks handlers (/tasks/*) are served by this same ADK application, so
+# there is one Cloud Run service, one deployment, and one identity. None of
+# these paths collide with the ADK-provided routes -- in particular ADK's
+# agent-invocation route is POST /run, which is distinct from POST /runs.
+from app.api.routes import router as production_router  # noqa: E402
+
+app.include_router(production_router)
+
 
 # Main execution
 if __name__ == "__main__":
