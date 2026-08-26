@@ -60,3 +60,43 @@
     (SUPPORTS/CONTRADICTS/INSUFFICIENT_EVIDENCE) are separate enums, and a Verification that found
     zero independent sources is recorded as `no_independent_source_found=True` with no outcome —
     never as INSUFFICIENT_EVIDENCE.
+
+## Opportunity Matcher V1 Decisions
+
+17. **Opportunity Matcher V1 is fully deterministic — zero Gemini calls, zero Search grounding.**
+    Reconciliation of an `OpportunityHypothesis` with its optional `Verification` is a fixed
+    18-cell lookup table (`app/investigator/opportunity_matcher.py`), and capability mapping is a
+    static `opportunity_id -> capability_id` dict (`app/investigator/capability_catalog.py`). Same
+    inputs always produce the same `OpportunityMatch`, line-by-line auditable.
+
+18. **Every hypothesis receives exactly one OpportunityMatch; `MATCHED`, `NOT_MATCHED`, and
+    `UNRESOLVED` are all first-class product output.** Rejected and unresolved opportunities are
+    persisted, never filtered out before writing. `OpportunityMatch.match_id` is always
+    `hypothesis_id`, used directly as the Firestore document ID, so a rerun overwrites in place
+    rather than creating duplicates — verified against the accepted real run (30 hypotheses -> 30
+    documents, unchanged after a second execution).
+
+19. **Conflicting Investigator/Verification findings resolve to `UNRESOLVED`, never a commercial
+    rescue.** `CONTRADICTED` + Verification `SUPPORTS` is always `UNRESOLVED`, never `MATCHED` —
+    independent supporting evidence does not erase original evidence that contradicted the
+    opportunity. The symmetric conflict (`CONFIRMED` + Verification `CONTRADICTS`) and the
+    single-source-upgrade case (`INSUFFICIENT_EVIDENCE` + Verification `SUPPORTS`, which has not
+    cleared the system's own confirmation bar) are also frozen to `UNRESOLVED`.
+
+20. **Capability fit is taxonomy, not evidence of business need.** `primary_capability_id` /
+    `supporting_capability_ids` are populated on every `OpportunityMatch` regardless of
+    `match_status` — they record which OpenCube capability corresponds to an opportunity type, not
+    that a given business needs it. Commercial eligibility is carried exclusively by
+    `match_status`; downstream consumers must gate actionable capability use on
+    `match_status == MATCHED`. CRM and Cloud PBX are never mapped to any opportunity evaluated in
+    V1, because neither was independently evaluated as a factual opportunity class by the Business
+    Investigator.
+
+21. **Opportunity Matcher never mutates upstream state.** It never calls `save_hypothesis`,
+    `save_verification`, `save_evidence`, `save_investigation`, `save_business`, or `save_run` —
+    only `save_opportunity_match`, writing exclusively to a new flat `opportunity_matches`
+    collection. It creates no Evidence; it only references existing `evidence_id`s already attached
+    to the `OpportunityHypothesis` and (when present) the `Verification`, kept in two separate
+    fields so Investigator-evidence and Verification-evidence provenance is never merged. Match
+    decisions are commercial-eligibility outputs, not epistemic rewrites, and `MATCHED` does not
+    mean contact authorization — that remains the future Human Gate's responsibility.
