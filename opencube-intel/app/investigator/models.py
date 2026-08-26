@@ -15,10 +15,29 @@ from pydantic import BaseModel, Field, model_validator
 
 
 class RunStatus(enum.StrEnum):
+    """Workflow state of a Run — never an analytical judgement.
+
+    CREATED/IN_PROGRESS predate Production Execution V1 and are retained so
+    the accepted reference run and the local proof scripts stay readable;
+    the asynchronous cloud flow never writes them. QUEUED/DISCOVERING/
+    INVESTIGATING/FINALIZING are the async orchestration phases. COMPLETED
+    and FAILED remain the only terminal values, and `investigator.finalize_run`
+    remains their only writer in the normal path.
+    """
+
     CREATED = "CREATED"
+    QUEUED = "QUEUED"
+    DISCOVERING = "DISCOVERING"
+    INVESTIGATING = "INVESTIGATING"
+    FINALIZING = "FINALIZING"
     IN_PROGRESS = "IN_PROGRESS"
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
+
+
+TERMINAL_RUN_STATUSES: frozenset[RunStatus] = frozenset(
+    {RunStatus.COMPLETED, RunStatus.FAILED}
+)
 
 
 class InvestigationStatus(enum.StrEnum):
@@ -97,6 +116,28 @@ class Run(BaseModel):
     investigation_count: int | None = None
     completed_investigation_count: int | None = None
     failed_investigation_count: int | None = None
+
+    # Optional Production Execution V1 orchestration bookkeeping. Every field
+    # is optional for the same backward-compatibility reason as the fields
+    # above: no migration, and the accepted reference Run document (which
+    # predates all of them) stays readable. Deliberately NO progress counters
+    # (investigations_completed/failed, verifications_completed,
+    # matches_completed): under at-least-once Cloud Tasks delivery an
+    # incremented counter is the single largest duplication hazard, so
+    # progress is derived by query at read time instead.
+    #
+    # `businesses_total` is the readiness barrier — it is written by the
+    # SCOUT task in the same Run write that flips status to INVESTIGATING,
+    # and it means "discovery and Investigation pre-creation completed", NOT
+    # "every business task was dispatched".
+    businesses_total: int | None = None
+    started_at: str | None = None
+    completed_at: str | None = None
+    failure_message: str | None = None
+    # Display/audit metadata only — never read for control flow. Finalization
+    # is scheduled exactly once by Cloud Tasks deterministic task naming, not
+    # by this field (see app/investigator/run_orchestrator.py).
+    finalize_enqueued_at: str | None = None
 
 
 class Business(BaseModel):
