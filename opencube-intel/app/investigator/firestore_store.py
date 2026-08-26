@@ -19,6 +19,7 @@ from app.investigator.models import (
     Evidence,
     Investigation,
     OpportunityHypothesis,
+    OpportunityMatch,
     Run,
     UsageMetadata,
     Verification,
@@ -32,6 +33,7 @@ EVIDENCE = "evidence"
 HYPOTHESES = "hypotheses"
 USAGE = "usage_metadata"
 VERIFICATIONS = "verifications"
+OPPORTUNITY_MATCHES = "opportunity_matches"
 
 
 @functools.cache
@@ -159,4 +161,15 @@ def list_verifications_for_run(run_id: str) -> list[dict]:
 
 def list_verifications_for_hypothesis(hypothesis_id: str) -> list[dict]:
     query = get_client().collection(VERIFICATIONS).where("hypothesis_id", "==", hypothesis_id)
+    return [d.to_dict() for d in query.stream()]
+
+
+def save_opportunity_match(match: OpportunityMatch) -> None:
+    get_client().collection(OPPORTUNITY_MATCHES).document(match.match_id).set(
+        as_firestore_dict(match)
+    )
+
+
+def list_matches_for_run(run_id: str) -> list[dict]:
+    query = get_client().collection(OPPORTUNITY_MATCHES).where("run_id", "==", run_id)
     return [d.to_dict() for d in query.stream()]

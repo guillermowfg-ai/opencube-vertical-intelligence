@@ -336,6 +336,85 @@ class Verification(BaseModel):
         return self
 
 
+class MatchStatus(enum.StrEnum):
+    """Commercial eligibility outcome of Opportunity Matcher V1's
+    deterministic reconciliation. Never an epistemic rewrite of
+    OpportunityStatus or VerificationOutcome -- see OpportunityMatch."""
+
+    MATCHED = "MATCHED"
+    NOT_MATCHED = "NOT_MATCHED"
+    UNRESOLVED = "UNRESOLVED"
+
+
+class MatchReasonCode(enum.StrEnum):
+    """One code per cell of the frozen 18-cell reconciliation matrix
+    (DECISIONS.md's Opportunity Matcher V1 entry). Exhaustive and fixed --
+    adding a cell requires adding a code here, never reusing an existing one
+    for a different (original_status, verification_state) pair."""
+
+    CONFIRMED_NO_VERIFICATION = "CONFIRMED_NO_VERIFICATION"
+    CONFIRMED_INDEPENDENTLY_SUPPORTED = "CONFIRMED_INDEPENDENTLY_SUPPORTED"
+    CONFIRMED_INDEPENDENTLY_CONTRADICTED_CONFLICT = "CONFIRMED_INDEPENDENTLY_CONTRADICTED_CONFLICT"
+    CONFIRMED_VERIFICATION_INCONCLUSIVE = "CONFIRMED_VERIFICATION_INCONCLUSIVE"
+    CONFIRMED_NO_INDEPENDENT_SOURCE = "CONFIRMED_NO_INDEPENDENT_SOURCE"
+    CONFIRMED_VERIFICATION_FAILED_TECHNICAL = "CONFIRMED_VERIFICATION_FAILED_TECHNICAL"
+
+    CONTRADICTED_UNVERIFIED = "CONTRADICTED_UNVERIFIED"
+    CONTRADICTED_INDEPENDENTLY_SUPPORTED_CONFLICT = "CONTRADICTED_INDEPENDENTLY_SUPPORTED_CONFLICT"
+    CONTRADICTED_INDEPENDENTLY_CONFIRMED = "CONTRADICTED_INDEPENDENTLY_CONFIRMED"
+    CONTRADICTED_VERIFICATION_INCONCLUSIVE = "CONTRADICTED_VERIFICATION_INCONCLUSIVE"
+    CONTRADICTED_NO_INDEPENDENT_SOURCE = "CONTRADICTED_NO_INDEPENDENT_SOURCE"
+    CONTRADICTED_VERIFICATION_FAILED_TECHNICAL = "CONTRADICTED_VERIFICATION_FAILED_TECHNICAL"
+
+    INSUFFICIENT_EVIDENCE_UNVERIFIED = "INSUFFICIENT_EVIDENCE_UNVERIFIED"
+    INSUFFICIENT_EVIDENCE_INDEPENDENTLY_SUPPORTED_UNRESOLVED = (
+        "INSUFFICIENT_EVIDENCE_INDEPENDENTLY_SUPPORTED_UNRESOLVED"
+    )
+    INSUFFICIENT_EVIDENCE_INDEPENDENTLY_CONTRADICTED = "INSUFFICIENT_EVIDENCE_INDEPENDENTLY_CONTRADICTED"
+    INSUFFICIENT_EVIDENCE_TWICE_INCONCLUSIVE = "INSUFFICIENT_EVIDENCE_TWICE_INCONCLUSIVE"
+    INSUFFICIENT_EVIDENCE_NO_INDEPENDENT_SOURCE = "INSUFFICIENT_EVIDENCE_NO_INDEPENDENT_SOURCE"
+    INSUFFICIENT_EVIDENCE_VERIFICATION_FAILED_TECHNICAL = "INSUFFICIENT_EVIDENCE_VERIFICATION_FAILED_TECHNICAL"
+
+
+class OpportunityMatch(BaseModel):
+    """Opportunity Matcher V1's deterministic commercial-eligibility output.
+
+    Additive only: never overwrites the original OpportunityHypothesis or
+    Verification (same discipline as Verification's own docstring). No
+    `confidence` field -- this layer is table-driven, not probabilistic.
+    `match_id` is always `hypothesis_id` (idempotency; see
+    app/investigator/opportunity_matcher.py).
+    """
+
+    match_id: str
+
+    run_id: str
+    business_id: str
+    investigation_id: str
+    hypothesis_id: str
+    verification_id: str | None
+
+    opportunity_id: str
+
+    original_status: OpportunityStatus
+
+    verification_execution_status: VerificationExecutionStatus | None
+    verification_outcome: VerificationOutcome | None
+    no_independent_source_found: bool | None
+
+    match_status: MatchStatus
+    reason_code: MatchReasonCode
+    reasoning: str
+
+    primary_capability_id: str | None
+    supporting_capability_ids: list[str] = Field(default_factory=list)
+
+    source_hypothesis_evidence_ids: list[str]
+    source_verification_evidence_ids: list[str]
+
+    created_at: str
+
+
 def as_firestore_dict(model: BaseModel) -> dict[str, Any]:
     """Enum-safe, Firestore-writable dict for any model in this module."""
     return model.model_dump(mode="json")
