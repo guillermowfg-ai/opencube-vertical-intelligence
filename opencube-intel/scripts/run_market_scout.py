@@ -27,14 +27,8 @@ from app.investigator import batch_runner, firestore_store, market_scout  # noqa
 from app.investigator.catalog import get_evaluated_definitions  # noqa: E402
 from app.investigator.models import Run, RunStatus  # noqa: E402
 
-TARGET_SELECTION_COUNT = 10
-PROVIDER_CAPABILITIES = [
-    "AI Appointment / Booking Assistance",
-    "AI Lead Intake & Qualification",
-    "AI Voice Reception",
-    "Missed-call Recovery",
-    "Automated Lead Follow-up",
-]
+TARGET_SELECTION_COUNT = market_scout.DEFAULT_TARGET_COUNT
+PROVIDER_CAPABILITIES = market_scout.DEFAULT_PROVIDER_CAPABILITIES
 
 
 def _print_header(title: str) -> None:

@@ -26,6 +26,18 @@ from app.investigator.places_client import search_businesses
 GEOGRAPHY = "Miami-Dade County, Florida"
 VERTICAL = "Med Spa"
 
+# Frozen V1 run defaults. Previously duplicated in scripts/run_market_scout.py;
+# they live here so the local proof script and the production API share one
+# source of truth rather than drifting apart.
+DEFAULT_TARGET_COUNT = 10
+DEFAULT_PROVIDER_CAPABILITIES: list[str] = [
+    "AI Appointment / Booking Assistance",
+    "AI Lead Intake & Qualification",
+    "AI Voice Reception",
+    "Missed-call Recovery",
+    "Automated Lead Follow-up",
+]
+
 # Frozen V1 submarkets (implementation prompt section 4). A single broad
 # query returns scattered, low-quality results, so V1 issues one targeted
 # query per submarket and merges. South Florida (Broward, Palm Beach) is

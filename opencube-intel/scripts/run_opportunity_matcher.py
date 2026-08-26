@@ -45,21 +45,6 @@ def _print_header(title: str) -> None:
     print("=" * 88)
 
 
-def _latest_verification_by_hypothesis(
-    verifications: list[Verification],
-) -> dict[str, Verification]:
-    """One Verification per hypothesis_id. If more than one exists for the
-    same hypothesis_id (not expected in the accepted dataset, but not
-    schema-enforced either), keep the latest by created_at -- never delete
-    or mutate the others."""
-    by_hypothesis: dict[str, Verification] = {}
-    for v in verifications:
-        current = by_hypothesis.get(v.hypothesis_id)
-        if current is None or v.created_at > current.created_at:
-            by_hypothesis[v.hypothesis_id] = v
-    return by_hypothesis
-
-
 def main() -> None:
     _print_header("OPPORTUNITY MATCHER V1 — LOADING EXISTING ACCEPTED RUN (read-only)")
     hypothesis_dicts = firestore_store.list_hypotheses_for_run(RUN_ID)
@@ -76,7 +61,9 @@ def main() -> None:
     verification_dicts = firestore_store.list_verifications_for_run(RUN_ID)
     verifications = [Verification(**d) for d in verification_dicts]
     print(f"total verifications loaded: {len(verifications)}")
-    verification_by_hypothesis = _latest_verification_by_hypothesis(verifications)
+    verification_by_hypothesis = opportunity_matcher.latest_verification_by_hypothesis(
+        verifications
+    )
 
     # Pre-execution snapshot for the immutability proof (step 7 below).
     pre_hypothesis_dicts = {h["hypothesis_id"]: h for h in hypothesis_dicts}

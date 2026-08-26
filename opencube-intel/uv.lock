@@ -1003,6 +1003,7 @@ dependencies = [
     { name = "proto-plus" },
     { name = "protobuf" },
 ]
+sdist = { url = "https://files.pythonhosted.org/packages/fa/e0/e63f6389903fded5c8fd60f464f0e0c443d1a9f4d447165ce8a88bd3a8d7/google_cloud_firestore-2.29.0.tar.gz", hash = "sha256:605a8463959da450531b09b60d4093c427d063e8880a38ed36f9bc02adc8ab99", size = 655284, upload-time = "2026-08-25T19:18:51.747Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/4e/a6/e7e2c1d83eda1bc022c50b4ed100782134348352b7fe43bf1a4721261d62/google_cloud_firestore-2.29.0-py3-none-any.whl", hash = "sha256:dd4e686610090a918da29f7e97a7f0cc6cb9e9b98c7d06b86471df45048cad2b", size = 432144, upload-time = "2026-08-24T21:55:36.901Z" },
 ]
@@ -1206,6 +1207,23 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/3e/65/b90fe3397596f7066336cf3979fd147aea68e1fcea10d71dd1f8dab974bc/google_cloud_storage_control-1.13.0.tar.gz", hash = "sha256:48351122e3375d2f00a393d6fbfed929c614246a2bd27c9410382b615a4641c6", size = 153274, upload-time = "2026-08-06T06:24:40.386Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/7f/00/937a64affecabc07bdf71041f463d044e3064be7133aa0176a6f1612793f/google_cloud_storage_control-1.13.0-py3-none-any.whl", hash = "sha256:6c8b0b922c38eb1614b5b6bf5d388b581c50a59705c00ec53d9ddd8c36470066", size = 110217, upload-time = "2026-08-06T06:23:35.2Z" },
+]
+
+[[package]]
+name = "google-cloud-tasks"
+version = "2.24.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "google-api-core", extra = ["grpc"] },
+    { name = "google-auth" },
+    { name = "grpc-google-iam-v1" },
+    { name = "grpcio" },
+    { name = "proto-plus" },
+    { name = "protobuf" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/cf/b2/7cfe6f0108baaaf535a8e3ccb5876f79430c2eb85f6f433e43c763dbe326/google_cloud_tasks-2.24.0.tar.gz", hash = "sha256:aa4f8764e5b157cbab81af619cc4fd9f14ebece8b69e5394a657c328a8366228", size = 370764, upload-time = "2026-08-06T06:24:45.842Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/53/8e/dc52d38465cc227fd8f5358984b67cc55080ed24781b99f6f7ff9d2b5e1e/google_cloud_tasks-2.24.0-py3-none-any.whl", hash = "sha256:1c82007a252d47efb4006eae5a5a0d9f6d375f917ab1c5cd80ce4a6f0ea4690d", size = 310091, upload-time = "2026-08-06T06:23:39.897Z" },
 ]
 
 [[package]]
@@ -2061,6 +2079,7 @@ dependencies = [
     { name = "google-cloud-aiplatform", extra = ["evaluation"] },
     { name = "google-cloud-firestore" },
     { name = "google-cloud-logging" },
+    { name = "google-cloud-tasks" },
     { name = "opentelemetry-resourcedetector-gcp" },
     { name = "python-multipart" },
     { name = "sqlalchemy" },
@@ -2099,6 +2118,7 @@ requires-dist = [
     { name = "google-cloud-aiplatform", extras = ["evaluation"], marker = "extra == 'eval'", specifier = ">=1.156.0" },
     { name = "google-cloud-firestore", specifier = ">=2.29.0" },
     { name = "google-cloud-logging", specifier = ">=3.12.0,<4.0.0" },
+    { name = "google-cloud-tasks", specifier = ">=2.24.0" },
     { name = "opentelemetry-resourcedetector-gcp", specifier = "<=1.12.0a0" },
     { name = "python-multipart", specifier = ">=0.0.20,<1.0.0" },
     { name = "ruff", marker = "extra == 'lint'", specifier = ">=0.4.6,<1.0.0" },

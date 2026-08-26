@@ -338,6 +338,21 @@ def _now() -> str:
     return datetime.datetime.now(datetime.UTC).isoformat()
 
 
+def latest_verification_by_hypothesis(
+    verifications: list[Verification],
+) -> dict[str, Verification]:
+    """One Verification per hypothesis_id. If more than one exists for the
+    same hypothesis_id (not expected in the accepted dataset, but not
+    schema-enforced either), keep the latest by created_at -- never delete
+    or mutate the others."""
+    by_hypothesis: dict[str, Verification] = {}
+    for v in verifications:
+        current = by_hypothesis.get(v.hypothesis_id)
+        if current is None or v.created_at > current.created_at:
+            by_hypothesis[v.hypothesis_id] = v
+    return by_hypothesis
+
+
 def summarize_matches(matches: list[OpportunityMatch]) -> dict:
     """Deterministic aggregate summary only -- no ranking, no narrative, no
     cross-business strategy (that is Vertical Strategist's job, not this
