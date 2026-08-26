@@ -37,3 +37,26 @@
 
 12. **Use least-privilege IAM.**
     Permissions are added only when required by an observed runtime or deployment need.
+
+## Verification Loop V1 Decisions
+
+13. **Verification is additive; it never overwrites the original Investigator result.**
+    A new `Verification` record (execution status + epistemic outcome) is persisted alongside the
+    immutable original `OpportunityHypothesis`. Disagreement between the two is expected, valid
+    output — a future Opportunity Matcher reconciles them, not this milestone.
+
+14. **Verification Evidence shares the canonical evidence collection and run_id with Investigator
+    Evidence.** Downstream consumers must use `collected_by` provenance when distinguishing
+    original investigation evidence from verification evidence; unfiltered run-level counts
+    include both.
+
+15. **Discovery and evidence are two separate Gemini calls, never one.**
+    Call 1 (Google Search grounding) is source discovery only — its prose is never persisted as
+    Evidence. Call 2 (schema-constrained reasoning) runs only over independently fetched source
+    material, never over search-model prose or the business's own site.
+
+16. **Technical execution failure and epistemic insufficiency are different facts.**
+    `VerificationExecutionStatus` (IN_PROGRESS/COMPLETED/FAILED) and `VerificationOutcome`
+    (SUPPORTS/CONTRADICTS/INSUFFICIENT_EVIDENCE) are separate enums, and a Verification that found
+    zero independent sources is recorded as `no_independent_source_found=True` with no outcome —
+    never as INSUFFICIENT_EVIDENCE.

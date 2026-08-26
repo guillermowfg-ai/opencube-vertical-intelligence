@@ -50,6 +50,33 @@ class ContactRecommendation(enum.StrEnum):
     HUMAN_REVIEW = "HUMAN_REVIEW"
 
 
+class VerificationExecutionStatus(enum.StrEnum):
+    """Whether a Verification attempt technically ran to completion.
+
+    Deliberately distinct from InvestigationStatus: a Verification and an
+    Investigation are different lifecycle entities that happen to share a
+    3-state shape today.
+    """
+
+    IN_PROGRESS = "IN_PROGRESS"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+
+
+class VerificationOutcome(enum.StrEnum):
+    """The epistemic result of a completed Verification.
+
+    Deliberately distinct from OpportunityStatus: a Verification only
+    supports/contradicts/fails-to-resolve an already-formed hypothesis, it
+    never CONFIRMS one — that word is reserved for the original Investigator
+    result so the two can disagree and both remain legible.
+    """
+
+    SUPPORTS = "SUPPORTS"
+    CONTRADICTS = "CONTRADICTS"
+    INSUFFICIENT_EVIDENCE = "INSUFFICIENT_EVIDENCE"
+
+
 class Run(BaseModel):
     run_id: str
     created_at: str
@@ -186,6 +213,12 @@ class UsageMetadata(BaseModel):
     total_tokens: int | None = None
     timestamp: str
     invocation_id: str | None = None
+    # Optional: added so Verification Loop invocations are distinguishable
+    # from Business Investigator invocations without a schema migration.
+    # Optional so every pre-existing UsageMetadata document (which predates
+    # both fields) remains readable.
+    phase: str | None = None
+    verification_id: str | None = None
 
 
 class InvestigationResult(BaseModel):
@@ -232,6 +265,74 @@ class InvestigationResult(BaseModel):
                     raise ValueError(
                         f"Hypothesis {h.hypothesis_id} references unknown evidence {ref}"
                     )
+        return self
+
+
+class RejectedSourceCandidate(BaseModel):
+    """A grounding candidate that failed independence/accessibility checks.
+
+    Kept for audit even though it never becomes Evidence — this is what
+    makes the independence filter's decisions reviewable rather than opaque.
+    """
+
+    url: str
+    reason: str
+
+
+class Verification(BaseModel):
+    """One independent-verification attempt against an existing, immutable
+    OpportunityHypothesis. Additive only: never overwrites the original
+    Investigator result (DECISIONS.md's Verification Loop entry).
+    """
+
+    verification_id: str
+    run_id: str
+    business_id: str
+    investigation_id: str
+    hypothesis_id: str
+    opportunity_id: str
+
+    original_status: OpportunityStatus
+    verification_target: str
+
+    execution_status: VerificationExecutionStatus
+    outcome: VerificationOutcome | None = None
+
+    independent_evidence_ids: list[str] = Field(default_factory=list)
+
+    requested_search_query: str | None = None
+    executed_search_queries: list[str] = Field(default_factory=list)
+
+    candidate_source_urls: list[str] = Field(default_factory=list)
+    rejected_sources: list[RejectedSourceCandidate] = Field(default_factory=list)
+
+    independent_sources_fetched: int = 0
+    no_independent_source_found: bool = False
+
+    reasoning: str | None = None
+    confidence: float | None = None
+
+    created_at: str
+    completed_at: str | None = None
+    failure_reason: str | None = None
+
+    @model_validator(mode="after")
+    def _execution_outcome_consistency(self) -> Verification:
+        if self.execution_status == VerificationExecutionStatus.FAILED and self.outcome is not None:
+            raise ValueError("A FAILED Verification must not carry an outcome")
+        if self.no_independent_source_found and self.outcome is not None:
+            raise ValueError(
+                "no_independent_source_found=True must not carry an outcome "
+                "(this is not INSUFFICIENT_EVIDENCE)"
+            )
+        if (
+            self.execution_status == VerificationExecutionStatus.COMPLETED
+            and not self.no_independent_source_found
+            and self.outcome is None
+        ):
+            raise ValueError("A COMPLETED Verification with a source must carry an outcome")
+        if self.confidence is not None and not 0.0 <= self.confidence <= 1.0:
+            raise ValueError("confidence must be within [0.0, 1.0]")
         return self
 
 

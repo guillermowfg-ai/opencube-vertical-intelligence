@@ -21,6 +21,7 @@ from app.investigator.models import (
     OpportunityHypothesis,
     Run,
     UsageMetadata,
+    Verification,
     as_firestore_dict,
 )
 
@@ -30,6 +31,7 @@ INVESTIGATIONS = "investigations"
 EVIDENCE = "evidence"
 HYPOTHESES = "hypotheses"
 USAGE = "usage_metadata"
+VERIFICATIONS = "verifications"
 
 
 @functools.cache
@@ -81,6 +83,11 @@ def get_business(business_id: str) -> dict | None:
 
 def get_investigation(investigation_id: str) -> dict | None:
     doc = get_client().collection(INVESTIGATIONS).document(investigation_id).get()
+    return doc.to_dict() if doc.exists else None
+
+
+def get_evidence(evidence_id: str) -> dict | None:
+    doc = get_client().collection(EVIDENCE).document(evidence_id).get()
     return doc.to_dict() if doc.exists else None
 
 
@@ -136,4 +143,20 @@ def list_usage_for_run(run_id: str) -> list[dict]:
     """Aggregate usage lookup by run_id (avoids the N+1 join through
     Investigation that investigation_id-only usage documents required)."""
     query = get_client().collection(USAGE).where("run_id", "==", run_id)
+    return [d.to_dict() for d in query.stream()]
+
+
+def save_verification(verification: Verification) -> None:
+    get_client().collection(VERIFICATIONS).document(verification.verification_id).set(
+        as_firestore_dict(verification)
+    )
+
+
+def list_verifications_for_run(run_id: str) -> list[dict]:
+    query = get_client().collection(VERIFICATIONS).where("run_id", "==", run_id)
+    return [d.to_dict() for d in query.stream()]
+
+
+def list_verifications_for_hypothesis(hypothesis_id: str) -> list[dict]:
+    query = get_client().collection(VERIFICATIONS).where("hypothesis_id", "==", hypothesis_id)
     return [d.to_dict() for d in query.stream()]

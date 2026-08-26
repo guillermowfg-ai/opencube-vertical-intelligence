@@ -17,6 +17,7 @@ chat widgets, submit forms, call phone numbers, or send messages.
 
 from __future__ import annotations
 
+import dataclasses
 import datetime
 import time
 from html.parser import HTMLParser
@@ -86,11 +87,16 @@ class _PageExtractor(HTMLParser):
         return " ".join(self._text_parts)
 
 
-def _same_domain(url: str, domain: str) -> bool:
+def _hostname(url: str) -> str:
+    """netloc, lowercased, with a leading 'www.' stripped. Empty on a bad URL."""
     try:
-        return urlparse(url).netloc.lower().removeprefix("www.") == domain
+        return urlparse(url).netloc.lower().removeprefix("www.")
     except ValueError:
-        return False
+        return ""
+
+
+def _same_domain(url: str, domain: str) -> bool:
+    return _hostname(url) == domain
 
 
 def _load_robot_parser(base_url: str, client: httpx.Client) -> RobotFileParser:
@@ -202,3 +208,101 @@ def fetch_business_sources(website_url: str) -> list[SourceMaterial]:
                 sources.append(result[0])
 
     return sources[:_MAX_PAGES]
+
+
+# ---------------------------------------------------------------------------
+# Independent-source fetch — Verification Loop V1.
+#
+# Deliberately separate from fetch_business_sources above: that function is
+# scoped to one business's own domain and crawls up to 3 keyword-scored
+# links. This one fetches exactly one arbitrary external candidate URL,
+# resolving it to its terminal destination first (Google Search grounding
+# candidate URIs are Vertex redirect links, not the underlying source) and
+# rejecting anything that isn't genuinely independent of the business being
+# investigated. No crawling, no further link discovery.
+# ---------------------------------------------------------------------------
+
+GOOGLE_HOST_SUFFIXES = ("google.com",)
+
+
+@dataclasses.dataclass
+class IndependentFetchResult:
+    source: SourceMaterial | None
+    rejected_reason: str | None  # None iff source is not None
+
+
+def resolve_and_fetch_independent_source(
+    candidate_url: str,
+    *,
+    business_domain: str,
+    original_source_urls: set[str],
+) -> IndependentFetchResult:
+    """Resolve `candidate_url` to its terminal URL and, if independent and
+    accessible, fetch it as a single page.
+
+    Rejection reasons (see Verification model's RejectedSourceCandidate):
+    invalid_url, fetch_failed, non_2xx, unresolved_redirect, google_host,
+    same_business_domain, business_subdomain, original_evidence_url,
+    robots_disallowed.
+    """
+    parsed = urlparse(candidate_url)
+    if parsed.scheme not in ("http", "https") or not parsed.netloc:
+        return IndependentFetchResult(None, "invalid_url")
+
+    try:
+        with httpx.Client(follow_redirects=True) as client:
+            resp = client.get(candidate_url, headers={"User-Agent": USER_AGENT}, timeout=_TIMEOUT)
+    except httpx.HTTPError:
+        return IndependentFetchResult(None, "fetch_failed")
+
+    if resp.status_code >= 400:
+        return IndependentFetchResult(None, "non_2xx")
+
+    terminal_url = str(resp.url)
+    terminal_host = _hostname(terminal_url)
+
+    if "vertexaisearch.cloud.google.com" in terminal_host or "grounding-api-redirect" in terminal_url:
+        # Never guess at an unresolved redirect's true destination.
+        return IndependentFetchResult(None, "unresolved_redirect")
+
+    if terminal_host == "google.com" or any(
+        terminal_host.endswith("." + suf) for suf in GOOGLE_HOST_SUFFIXES
+    ):
+        return IndependentFetchResult(None, "google_host")
+
+    if terminal_host == business_domain:
+        return IndependentFetchResult(None, "same_business_domain")
+    if terminal_host.endswith("." + business_domain):
+        return IndependentFetchResult(None, "business_subdomain")
+
+    normalized_originals = {u.rstrip("/") for u in original_source_urls}
+    if terminal_url.rstrip("/") in normalized_originals:
+        return IndependentFetchResult(None, "original_evidence_url")
+
+    terminal_parsed = urlparse(terminal_url)
+    try:
+        with httpx.Client(follow_redirects=True) as robots_client:
+            robots = _load_robot_parser(
+                f"{terminal_parsed.scheme}://{terminal_parsed.netloc}/", robots_client
+            )
+        if not robots.can_fetch(USER_AGENT, terminal_url):
+            return IndependentFetchResult(None, "robots_disallowed")
+    except httpx.HTTPError:
+        pass  # robots.txt unreachable -> allow by default, same as fetch_business_sources
+
+    extractor = _PageExtractor()
+    try:
+        extractor.feed(resp.text)
+    except Exception:
+        return IndependentFetchResult(None, "fetch_failed")
+    content = extractor.text()[:_MAX_CONTENT_CHARS]
+    if not content.strip():
+        return IndependentFetchResult(None, "fetch_failed")
+
+    source = SourceMaterial(
+        source_type=SourceType.WEBSITE,
+        source_url=terminal_url,
+        retrieved_at=datetime.datetime.now(datetime.UTC).isoformat(),
+        content=content,
+    )
+    return IndependentFetchResult(source, None)

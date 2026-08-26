@@ -17,6 +17,7 @@ from app.investigator.models import (
     OpportunityHypothesis,
 )
 from app.investigator.source_adapter import SourceMaterial
+from app.investigator.verification_reasoner import GeminiVerificationEvaluation
 
 
 class AssemblyError(ValueError):
@@ -94,3 +95,43 @@ def build_hypothesis(
         confidence=evaluation.confidence,
         status=evaluation.status,
     )
+
+
+def assign_verification_evidence_records(
+    evaluation: GeminiVerificationEvaluation,
+    independent_sources: list[SourceMaterial],
+    *,
+    run_id: str,
+    business_id: str,
+    investigation_id: str,
+    collected_by: str,
+) -> list[Evidence]:
+    """Verification Loop equivalent of assign_evidence_records above: every
+    item's source_url must match a URL actually fetched by
+    resolve_and_fetch_independent_source (already checked once in
+    verification_reasoner, re-checked here as the deterministic gate before
+    persistence). Reuses the canonical Evidence model -- no parallel
+    VerificationEvidence type.
+    """
+    sources_by_url = {s.source_url: s for s in independent_sources}
+    records: list[Evidence] = []
+    for item in evaluation.evidence:
+        source = sources_by_url.get(item.source_url)
+        if source is None:
+            raise AssemblyError(
+                f"Verification evidence cites unknown source_url: {item.source_url!r}"
+            )
+        records.append(
+            Evidence(
+                evidence_id=str(uuid.uuid4()),
+                run_id=run_id,
+                business_id=business_id,
+                investigation_id=investigation_id,
+                source_url=source.source_url,
+                source_type=source.source_type,
+                observation=item.observation,
+                retrieved_at=source.retrieved_at,
+                collected_by=collected_by,
+            )
+        )
+    return records
