@@ -6,6 +6,13 @@ OpportunityDefinition description, never freely written by Gemini, and
 never mutated after search results are seen (implementation prompt
 section 5 / section 19).
 
+CRITICAL invariant: the canonical proposition for a given opportunity_id is
+status-independent. SUPPORTS/CONTRADICTS/INSUFFICIENT_EVIDENCE must always
+be evaluated against the SAME bounded claim regardless of whether the
+original Investigator status was CONFIRMED, CONTRADICTED, or
+INSUFFICIENT_EVIDENCE -- the original status is context for the reasoner,
+never a selector for a different (let alone polarity-flipped) proposition.
+
 No Gemini call. No randomness. Same inputs -> same output.
 """
 
@@ -13,43 +20,20 @@ from __future__ import annotations
 
 from app.investigator.models import OpportunityStatus
 
-# One deterministic template pair per (opportunity_id, original_status).
-# CONTRADICTED and INSUFFICIENT_EVIDENCE target the same underlying
-# proposition that was originally evaluated -- never a new opposite claim.
-_TARGETS: dict[tuple[str, OpportunityStatus], str] = {
-    ("online_booking_friction", OpportunityStatus.CONFIRMED): (
+# One canonical, status-independent target per opportunity_id. The original
+# OpportunityStatus is accepted by build_verification_target below for
+# call-site/context compatibility only -- it must never select a different
+# entry here.
+_CANONICAL_TARGETS: dict[str, str] = {
+    "online_booking_friction": (
         "The inspected public presence does not expose a visible direct "
         "online booking path."
     ),
-    ("online_booking_friction", OpportunityStatus.CONTRADICTED): (
-        "The inspected public presence exposes a visible direct online "
-        "booking path."
-    ),
-    ("online_booking_friction", OpportunityStatus.INSUFFICIENT_EVIDENCE): (
-        "The inspected public presence does not expose a visible direct "
-        "online booking path."
-    ),
-    ("after_hours_lead_intake", OpportunityStatus.CONFIRMED): (
-        "The inspected public presence exposes no asynchronous or "
+    "after_hours_lead_intake": (
+        "The inspected public presence does not expose an asynchronous or "
         "after-hours lead intake channel beyond a telephone number."
     ),
-    ("after_hours_lead_intake", OpportunityStatus.CONTRADICTED): (
-        "The inspected public presence exposes an asynchronous or "
-        "after-hours lead intake channel beyond a telephone number."
-    ),
-    ("after_hours_lead_intake", OpportunityStatus.INSUFFICIENT_EVIDENCE): (
-        "The inspected public presence exposes no asynchronous or "
-        "after-hours lead intake channel beyond a telephone number."
-    ),
-    ("lead_follow_up_effectiveness", OpportunityStatus.CONFIRMED): (
-        "The business's public presence does not exhibit a published, "
-        "verifiable lead follow-up response-time commitment."
-    ),
-    ("lead_follow_up_effectiveness", OpportunityStatus.CONTRADICTED): (
-        "The business's public presence exhibits a published, verifiable "
-        "lead follow-up response-time commitment."
-    ),
-    ("lead_follow_up_effectiveness", OpportunityStatus.INSUFFICIENT_EVIDENCE): (
+    "lead_follow_up_effectiveness": (
         "The business's public presence does not exhibit a published, "
         "verifiable lead follow-up response-time commitment."
     ),
@@ -57,20 +41,22 @@ _TARGETS: dict[tuple[str, OpportunityStatus], str] = {
 
 
 class UnknownVerificationTargetError(ValueError):
-    """Raised when no deterministic template exists for this input pair."""
+    """Raised when no deterministic template exists for this opportunity_id."""
 
 
 def build_verification_target(opportunity_id: str, original_status: OpportunityStatus) -> str:
-    """Deterministically derive the bounded proposition to independently verify.
+    """Deterministically derive the bounded, status-independent proposition
+    to independently verify.
 
-    Raises UnknownVerificationTargetError rather than fabricating a target
-    for an (opportunity_id, status) pair this module has no template for --
-    a missing template must fail closed, not silently invent a claim.
+    `original_status` is accepted for context/compatibility only -- it never
+    selects a different template. Raises UnknownVerificationTargetError
+    rather than fabricating a target for an opportunity_id this module has
+    no canonical template for -- a missing template must fail closed, not
+    silently invent a claim.
     """
-    key = (opportunity_id, original_status)
-    if key not in _TARGETS:
+    del original_status  # context only -- must never change which target is returned
+    if opportunity_id not in _CANONICAL_TARGETS:
         raise UnknownVerificationTargetError(
-            f"No deterministic verification_target template for "
-            f"opportunity_id={opportunity_id!r}, original_status={original_status!r}"
+            f"No canonical verification_target template for opportunity_id={opportunity_id!r}"
         )
-    return _TARGETS[key]
+    return _CANONICAL_TARGETS[opportunity_id]

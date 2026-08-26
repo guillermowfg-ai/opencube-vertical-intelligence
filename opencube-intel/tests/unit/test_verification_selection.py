@@ -98,3 +98,46 @@ def test_verification_target_matches_bounded_observational_scope() -> None:
     # Must not overreach into unsupported commercial/behavioral claims.
     for overreach in ("revenue", "lose", "abandon", "customers", "conversion"):
         assert overreach not in target.lower()
+
+
+# --- regression: verification_target is status-independent ----------------
+#
+# SUPPORTS/CONTRADICTS/INSUFFICIENT_EVIDENCE must always be evaluated
+# against the SAME canonical proposition for a given opportunity_id --
+# the original OpportunityStatus is context only and must never select a
+# different (let alone polarity-flipped) target.
+
+_CANONICAL_OPPORTUNITY_IDS = (
+    "online_booking_friction",
+    "after_hours_lead_intake",
+    "lead_follow_up_effectiveness",
+)
+
+
+def test_target_is_identical_across_all_original_statuses() -> None:
+    for opportunity_id in _CANONICAL_OPPORTUNITY_IDS:
+        confirmed = build_verification_target(opportunity_id, OpportunityStatus.CONFIRMED)
+        contradicted = build_verification_target(opportunity_id, OpportunityStatus.CONTRADICTED)
+        insufficient = build_verification_target(
+            opportunity_id, OpportunityStatus.INSUFFICIENT_EVIDENCE
+        )
+        assert confirmed == contradicted == insufficient, (
+            f"verification_target for {opportunity_id!r} must not vary by original_status"
+        )
+
+
+def test_contradicted_target_is_not_a_polarity_flipped_opposite() -> None:
+    # The historical bug: a CONTRADICTED-status target that negates the
+    # CONFIRMED-status target for the same opportunity_id (e.g. "exposes"
+    # vs "does not expose"). Assert the two share the same polarity marker.
+    for opportunity_id in _CANONICAL_OPPORTUNITY_IDS:
+        confirmed = build_verification_target(opportunity_id, OpportunityStatus.CONFIRMED)
+        contradicted = build_verification_target(opportunity_id, OpportunityStatus.CONTRADICTED)
+        confirmed_is_negative = "does not" in confirmed or "no " in confirmed or " no" in confirmed
+        contradicted_is_negative = (
+            "does not" in contradicted or "no " in contradicted or " no" in contradicted
+        )
+        assert confirmed_is_negative == contradicted_is_negative, (
+            f"CONTRADICTED target for {opportunity_id!r} has flipped polarity "
+            f"relative to CONFIRMED: {confirmed!r} vs {contradicted!r}"
+        )
