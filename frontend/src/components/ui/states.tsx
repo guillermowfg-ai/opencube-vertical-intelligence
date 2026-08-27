@@ -8,6 +8,7 @@
 
 import type { ReactNode } from "react";
 import { ApiError } from "../../lib/api";
+import { fill, useI18n } from "../../i18n";
 import { Card } from "./primitives";
 import { cx } from "../../lib/cx";
 
@@ -103,19 +104,18 @@ export function ErrorState({
   onRetry?: () => void;
   context?: string;
 }) {
-  const offline = error.isOffline;
-  const notFound = error.isNotFound;
+  const { t } = useI18n();
 
-  const title = offline
-    ? "The intelligence API is unreachable"
-    : notFound
-      ? `${context ?? "That record"} was not found`
-      : "This view could not be loaded";
+  const title = error.isOffline
+    ? t.errors.offlineTitle
+    : error.isNotFound
+      ? fill(t.errors.notFoundTitle, { context: context ?? t.errors.fallbackContext })
+      : t.errors.genericTitle;
 
-  const description = offline
-    ? "Nothing was retrieved, so nothing on this screen would be accurate. Check that the backend is running and reachable, then retry."
-    : notFound
-      ? "It may belong to a run that was never persisted, or the identifier may be wrong."
+  const description = error.isOffline
+    ? t.errors.offlineBody
+    : error.isNotFound
+      ? t.errors.notFoundBody
       : (error.detail ?? error.message);
 
   return (
@@ -142,7 +142,7 @@ export function ErrorState({
           onClick={onRetry}
           className="mt-4 rounded-lg border border-rose-300 bg-white px-3.5 py-2 text-sm font-medium text-rose-800 transition hover:bg-rose-50"
         >
-          Retry
+          {t.common.retry}
         </button>
       ) : null}
     </div>

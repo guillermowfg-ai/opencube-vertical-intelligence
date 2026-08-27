@@ -1,20 +1,22 @@
 /**
- * Overview — the executive snapshot.
+ * Command centre -- the executive snapshot.
  *
- * Ordered by the question an operator actually opens the product with:
- * how much has the platform done, what is running right now, what is
- * actionable, and where does the reasoning disagree with itself.
+ * Ordered by the question someone actually opens the product with: what is
+ * running right now, how much has been done, what is worth acting on, and
+ * where the evidence disagrees with itself.
  */
 
 import { Link } from "react-router-dom";
 import { api, useResource } from "../lib/api";
-import { MATCH_STATUS, RUN_STATUS, isRunLive } from "../lib/domain";
+import { isRunLive } from "../lib/domain";
 import { toSegments } from "../lib/segments";
-import { formatDateTime, formatRelative, pluralize, shortId } from "../lib/format";
+import { useStatus } from "../lib/useStatus";
+import { fill, useI18n } from "../i18n";
+import { formatDateTime, formatRelative, shortId } from "../lib/format";
 import type { RunSummary } from "../lib/types";
 import { RunsTable } from "../components/RunsTable";
 import { StatusBadge } from "../components/ui/StatusBadge";
-import { Distribution, RankedBars, StatCard } from "../components/ui/metrics";
+import { Distribution, RankedBars, ResultDonut, StatCard } from "../components/ui/metrics";
 import { Card, PageHeader, SectionHeading } from "../components/ui/primitives";
 import { cx } from "../lib/cx";
 import {
@@ -26,6 +28,8 @@ import {
 } from "../components/ui/states";
 
 export function OverviewPage() {
+  const { t } = useI18n();
+  const status = useStatus();
   const { data, error, loading, refreshing, reload } = useResource(
     (signal) => api.overview(signal),
     [],
@@ -36,7 +40,7 @@ export function OverviewPage() {
     return (
       <>
         <OverviewHeader generatedAt={null} refreshing={false} />
-        <ErrorState error={error} onRetry={reload} context="The overview" />
+        <ErrorState error={error} onRetry={reload} context={t.overview.error} />
       </>
     );
   }
@@ -67,111 +71,107 @@ export function OverviewPage() {
 
       {liveRun ? <LiveRunBanner run={liveRun} /> : null}
 
-      <section aria-label="Platform totals">
+      <section aria-label={t.overview.title}>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6">
           <StatCard
-            label="Runs"
+            label={t.overview.kpi.runs}
             value={kpis.runs_total}
             hint={
               kpis.runs_active > 0
-                ? `${kpis.runs_active} in flight`
-                : `${kpis.runs_completed} completed`
+                ? fill(t.overview.kpi.runsHintActive, { count: kpis.runs_active })
+                : fill(t.overview.kpi.runsHintDone, { count: kpis.runs_completed })
             }
             to="/runs"
           />
           <StatCard
-            label="Businesses"
+            label={t.overview.kpi.businesses}
             value={kpis.businesses_discovered}
-            hint="Pulled into an investigation"
+            hint={t.overview.kpi.businessesHint}
             to="/businesses"
           />
           <StatCard
-            label="Investigated"
+            label={t.overview.kpi.researched}
             value={kpis.businesses_investigated}
-            hint={`${kpis.evidence_total} investigator evidence ${pluralize(kpis.evidence_total, "record")}`}
+            hint={fill(t.overview.kpi.researchedHint, { count: kpis.evidence_total })}
           />
           <StatCard
-            label="Verifications"
+            label={t.overview.kpi.secondOpinions}
             value={kpis.verifications_completed}
-            hint={`Across ${kpis.hypotheses_total} ${pluralize(kpis.hypotheses_total, "hypothesis", "hypotheses")}`}
+            hint={fill(t.overview.kpi.secondOpinionsHint, { count: kpis.hypotheses_total })}
           />
           <StatCard
-            label="Matched"
+            label={t.overview.kpi.goodFit}
             value={kpis.matches_matched}
-            hint={`of ${kpis.matches_total} evaluated`}
+            hint={fill(t.overview.kpi.goodFitHint, { count: kpis.matches_total })}
             emphasis
             to="/matches?status=MATCHED"
           />
           <StatCard
-            label="Needs review"
+            label={t.overview.kpi.needsPerson}
             value={kpis.review_needed}
-            hint="Unresolved conflicts"
+            hint={t.overview.kpi.needsPersonHint}
             tone={kpis.review_needed > 0 ? "caution" : undefined}
             to="/matches?status=UNRESOLVED"
           />
         </div>
       </section>
 
-      <section
-        className="mt-8 grid items-start gap-6 xl:grid-cols-3"
-        aria-label="Pipeline distributions"
-      >
+      <section className="mt-6">
+        <ResultDonut
+          title={t.overview.fit.title}
+          segments={toSegments(data.match_status_counts, "fit", status)}
+          totalLabel={t.nav.matches}
+          emptyMessage={t.overview.fit.empty}
+        >
+          <p className="text-xs leading-relaxed text-vault-ink-muted">
+            {t.overview.fit.description}
+          </p>
+        </ResultDonut>
+      </section>
+
+      <section className="mt-6 grid items-start gap-6 lg:grid-cols-2">
         <Card>
           <SectionHeading
-            eyebrow="Investigator"
-            title="Hypothesis outcomes"
-            description="What the evidence supported before anything independent was consulted."
+            title={t.overview.findings.title}
+            description={t.overview.findings.description}
           />
           <Distribution
-            segments={toSegments(data.hypothesis_status_counts, "hypothesis")}
-            emptyMessage="No hypotheses have been formed yet."
+            segments={toSegments(data.hypothesis_status_counts, "finding", status)}
+            emptyMessage={t.overview.findings.empty}
           />
         </Card>
 
         <Card>
           <SectionHeading
-            eyebrow="Verification loop"
-            title="Independent verification"
-            description="What a source outside the business said about each hypothesis."
+            title={t.overview.verification.title}
+            description={t.overview.verification.description}
           />
           <Distribution
-            segments={toSegments(data.verification_state_counts, "verification")}
-            emptyMessage="No verification has run yet."
-          />
-        </Card>
-
-        <Card>
-          <SectionHeading
-            eyebrow="Opportunity matcher"
-            title="Commercial eligibility"
-            description="The deterministic reconciliation of the two columns to its left."
-          />
-          <Distribution
-            segments={toSegments(data.match_status_counts, "match")}
-            emptyMessage="No opportunities have been reconciled yet."
+            segments={toSegments(data.verification_state_counts, "secondOpinion", status)}
+            emptyMessage={t.overview.verification.empty}
           />
         </Card>
       </section>
 
-      <section className="mt-8 grid items-start gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+      <section className="mt-6 grid items-start gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <Card>
           <SectionHeading
-            title="Notable opportunities"
-            description="Matched opportunities, newest first. Matched means commercially eligible — never contact authorisation."
+            title={t.overview.highlights.title}
+            description={t.overview.highlights.description}
             action={
               <Link
                 to="/matches?status=MATCHED"
                 className="text-sm font-medium text-brand-600 transition hover:text-brand-700"
               >
-                All opportunities →
+                {t.common.viewAll} →
               </Link>
             }
           />
           {data.highlighted_matches.length === 0 ? (
             <EmptyState
               compact
-              title="Nothing matched yet"
-              description="Matched opportunities appear here once a run reaches the matching phase."
+              title={t.overview.highlights.empty}
+              description={t.overview.highlights.emptyHelp}
             />
           ) : (
             <ul className="divide-y divide-hairline">
@@ -192,18 +192,15 @@ export function OverviewPage() {
                         {match.primary_capability_label ? (
                           <>{match.primary_capability_label} · </>
                         ) : null}
-                        {/* The run is what separates two otherwise identical
-                            rows: the same business can match the same
-                            opportunity in several runs, for different
-                            reasons. */}
-                        <span className="font-mono">run {shortId(match.run_id, 8)}</span>
+                        {/* The analysis is what separates two otherwise
+                            identical rows: the same business can be a good fit
+                            for the same opportunity in several analyses, for
+                            different reasons. */}
+                        <span className="font-mono">{shortId(match.run_id, 8)}</span>
                       </p>
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-1.5">
-                      <StatusBadge meta={MATCH_STATUS[match.match_status]} />
-                      <span className="text-xs text-ink-muted">
-                        {formatRelative(match.created_at)}
-                      </span>
+                      <StatusBadge meta={status.fit(match.match_status)} />
                     </div>
                   </Link>
                 </li>
@@ -215,40 +212,40 @@ export function OverviewPage() {
         <div className="space-y-6">
           <Card>
             <SectionHeading
-              title="Capability demand"
-              description="Primary capability behind each matched opportunity."
+              title={t.overview.capability.title}
+              description={t.overview.capability.description}
             />
             <RankedBars
               items={data.matched_capability_counts}
-              emptyMessage="No capability has been matched yet."
+              emptyMessage={t.overview.capability.empty}
             />
           </Card>
 
           <Card>
             <SectionHeading
-              title="Opportunity coverage"
-              description="How often each catalog opportunity was evaluated."
+              title={t.overview.coverage.title}
+              description={t.overview.coverage.description}
             />
             <RankedBars
               items={data.opportunity_counts}
               fill="bg-slate-300"
-              emptyMessage="No opportunities have been evaluated yet."
+              emptyMessage={t.overview.coverage.empty}
             />
           </Card>
         </div>
       </section>
 
-      <section className="mt-8">
+      <section className="mt-6">
         <Card>
           <SectionHeading
-            title="Recent runs"
-            description="Each run is one discovery-to-matching sweep over the active vertical."
+            title={t.overview.recent.title}
+            description={t.overview.recent.description}
             action={
               <Link
                 to="/runs"
                 className="text-sm font-medium text-brand-600 transition hover:text-brand-700"
               >
-                All runs →
+                {t.common.viewAll} →
               </Link>
             }
           />
@@ -257,8 +254,8 @@ export function OverviewPage() {
             empty={
               <EmptyState
                 compact
-                title="No runs yet"
-                description="A run is created by the backend API. Once one exists, its progress appears here."
+                title={t.overview.recent.empty}
+                description={t.overview.recent.emptyHelp}
               />
             }
           />
@@ -275,28 +272,31 @@ function OverviewHeader({
   generatedAt: string | null;
   refreshing: boolean;
 }) {
+  const { t, locale } = useI18n();
   return (
     <PageHeader
-      eyebrow="OpenCube Intel"
-      title="Operational overview"
-      subtitle="Evidence-grounded market intelligence for the active vertical. Every number here is derived from persisted evidence — nothing on this page is inferred by the interface."
+      eyebrow={t.overview.eyebrow}
+      title={t.overview.title}
+      subtitle={t.overview.subtitle}
       actions={
         generatedAt ? (
           <span
             className={cx(
               "inline-flex items-center gap-2 rounded-full border border-hairline bg-surface px-3 py-1.5 text-xs font-medium transition-colors",
-              refreshing ? "text-blue-700" : "text-ink-muted",
+              refreshing ? "text-cyan-700" : "text-ink-muted",
             )}
-            title={`Snapshot taken ${formatDateTime(generatedAt)}`}
+            title={formatDateTime(locale, generatedAt)}
           >
             <span
               aria-hidden="true"
               className={cx(
                 "size-1.5 rounded-full",
-                refreshing ? "live-dot bg-blue-700" : "bg-slate-400",
+                refreshing ? "live-dot bg-cyan-600" : "bg-slate-400",
               )}
             />
-            {refreshing ? "Refreshing" : `Updated ${formatRelative(generatedAt)}`}
+            {refreshing
+              ? t.common.refreshing
+              : fill(t.common.updated, { time: formatRelative(locale, generatedAt) })}
           </span>
         ) : undefined
       }
@@ -305,6 +305,8 @@ function OverviewHeader({
 }
 
 function LiveRunBanner({ run }: { run: RunSummary }) {
+  const { t, locale } = useI18n();
+  const status = useStatus();
   const done = run.investigations_completed + run.investigations_failed;
   const total = run.businesses_total ?? run.investigations_total;
 
@@ -314,18 +316,19 @@ function LiveRunBanner({ run }: { run: RunSummary }) {
       className="card hover-lift mb-6 flex flex-wrap items-center gap-x-6 gap-y-3 border-brand-200 bg-brand-50/40 p-4 sm:p-5"
     >
       <div className="flex min-w-0 flex-1 items-center gap-3">
-        <StatusBadge meta={RUN_STATUS[run.status]} live />
+        <StatusBadge meta={status.run(run.status)} live />
         <div className="min-w-0">
           <p className="truncate font-mono text-sm font-medium text-ink">{run.run_id}</p>
           <p className="truncate text-xs text-ink-soft">
             {run.vertical} · {run.geography} ·{" "}
-            {/* The age is the point, not decoration: a run the backend still
-                reports as non-terminal may have been sitting that way for
-                days. Showing when it started lets an operator see that
-                without the interface inventing a "stalled" status the
-                pipeline never wrote. */}
-            <span title={formatDateTime(run.created_at)}>
-              started {formatRelative(run.created_at)}
+            {/* The age is the point, not decoration: an analysis the back end
+                still reports as unfinished may have been sitting that way for
+                days. Showing when it started lets someone see that without the
+                interface inventing a status the pipeline never wrote. */}
+            <span title={formatDateTime(locale, run.created_at)}>
+              {fill(t.common.startedRelative, {
+                time: formatRelative(locale, run.created_at),
+              })}
             </span>
           </p>
         </div>
@@ -336,13 +339,10 @@ function LiveRunBanner({ run }: { run: RunSummary }) {
             {done}
             {total ? `/${total}` : ""}
           </span>{" "}
-          investigated
-        </span>
-        <span className="text-ink-soft">
-          <span className="font-semibold text-ink">{run.matches_total}</span> matched so far
+          {t.runDetail.kpi.businesses.toLowerCase()}
         </span>
       </div>
-      <span className="text-sm font-medium text-brand-600">Open run →</span>
+      <span className="text-sm font-medium text-brand-600">{t.common.openRun} →</span>
     </Link>
   );
 }

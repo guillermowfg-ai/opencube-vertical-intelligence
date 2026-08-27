@@ -53,9 +53,11 @@ real reconciliation matrix.
 
 ```
 src/
-  lib/            api client, transport types, status vocabulary, formatting
+  i18n/           en.ts / es.ts dictionaries, the provider, the useI18n hook
+  lib/            api client, transport types, status colours, formatting
   components/     app shell, tables, and the ui/ primitives they share
   pages/          one file per screen
+public/brand/     the official OpenCube logo, unmodified
 ```
 
 `src/lib/` is re-included in `.gitignore` on purpose — see the comment there.
@@ -72,12 +74,43 @@ src/
 - **Catalog** — the declarative opportunity and capability vocabularies, served
   by the backend rather than restated here.
 
+## Language
+
+The UI ships in English and Spanish, switchable from the top bar and remembered
+per browser. All copy lives in `src/i18n/en.ts` and `src/i18n/es.ts`; the
+`Dictionary` type makes a missing Spanish key a build error rather than an
+English string leaking into a Spanish screen. The chosen language also drives
+`Intl`, so dates, numbers and relative times follow it.
+
+**What stays in English in both languages** is back-end data, not UI copy:
+opportunity names, service names, catalog definitions, evidence observations
+and the stored decision sentence. Those are pipeline records — translating them
+in the browser would invent content the system never produced. The plain
+explanation of each decision *is* translated, because it is keyed to the
+reason code rather than rewriting the record.
+
+## Copy
+
+Written for someone who runs a business, not someone who built the pipeline.
+"Hypothesis" is *what we found*, "verification" is a *second opinion*, and
+"match status" is *can we help?*. The underlying record names still appear
+where they are literally the data — a reason code, a status value — but never
+as the explanation.
+
 ## Design notes
 
-Light surfaces throughout; the navigation rail is the only dark one. Orange is
-the brand accent and is spent on navigation, links and the single most
-important number on a screen — never on a data mark, so it can never be
-mistaken for a status.
+Light surfaces throughout, following the approved reference: a white navigation
+rail, a soft warm-grey canvas, white cards. Dark is spent on exactly one panel
+per screen — the headline result — where it earns its weight.
+
+The logo is the real asset at `public/brand/opencube-logo.png`, byte-identical
+to `design-references/opencube-logo.png`. It is never redrawn: the empty canvas
+around the artwork is cropped by CSS (`.brand-logo` in `index.css`), computed
+from the measured content box, so the file itself is untouched.
+
+Orange is the brand accent and is spent on the logo, navigation, links and the
+single most important number on a screen — never on a data mark, so it can
+never be mistaken for a status.
 
 Three status layers are kept visually distinct, because conflating them is the
 mistake the product exists to avoid:
@@ -88,6 +121,9 @@ mistake the product exists to avoid:
 | Independent | `SUPPORTS` / `CONTRADICTS` / `INSUFFICIENT_EVIDENCE` / `NO_INDEPENDENT_SOURCE` / `FAILED` | what an outside source said |
 | Commercial | `MATCHED` / `NOT_MATCHED` / `UNRESOLVED` | whether OpenCube can act on it |
 
-Chart fills use teal / rose / amber / slate / blue, validated for colour-vision
-separation and 3:1 contrast against the light surface. Every distribution ships
-its labels and counts as text, so identity is never carried by colour alone.
+Chart fills use green / amber / rose / slate / violet / cyan, validated against
+both the light canvas and the dark panel for colour-vision separation and 3:1
+contrast. Segments always render in that order so green and rose are never
+neighbours — that pair is the classic red/green confusion and cannot be tuned
+into compliance. Every distribution ships its labels and counts as text, so
+identity is never carried by colour alone.

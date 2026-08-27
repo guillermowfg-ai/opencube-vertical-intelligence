@@ -5,11 +5,12 @@
  */
 
 import type { ReactNode } from "react";
-import { TONE_CLASSES, type StatusMeta, type Tone } from "../../lib/domain";
+import { TONE_CLASSES, type Tone } from "../../lib/domain";
+import type { StatusMeta } from "../../lib/useStatus";
 import { cx } from "../../lib/cx";
 
 export function Badge({
-  tone = "neutral",
+  tone = "muted",
   children,
   title,
   className,
@@ -62,8 +63,9 @@ export function StatusBadge({
   );
 }
 
-/** A quieter chip for taxonomy — capabilities, opportunity types, IDs. It is
- * deliberately colourless: capability fit is not evidence of need. */
+/** A quieter chip for taxonomy -- services, opportunity kinds, references. It
+ * is deliberately colourless: a service matching an opportunity type is not
+ * evidence that a business needs it. */
 export function Chip({
   children,
   title,

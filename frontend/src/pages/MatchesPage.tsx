@@ -1,17 +1,20 @@
-/** Opportunities across every run, filterable by commercial eligibility. */
+/** Opportunities across every analysis, filtered by whether we can help. */
 
 import { useSearchParams } from "react-router-dom";
 import { api, useResource } from "../lib/api";
-import { MATCH_STATUS } from "../lib/domain";
+import { useStatus } from "../lib/useStatus";
+import { useI18n } from "../i18n";
 import type { MatchStatus } from "../lib/types";
 import { MatchesTable } from "../components/MatchesTable";
 import { Card, PageHeader } from "../components/ui/primitives";
 import { cx } from "../lib/cx";
 import { EmptyState, ErrorState, SkeletonRows } from "../components/ui/states";
 
-const STATUSES = Object.keys(MATCH_STATUS) as MatchStatus[];
+const STATUSES: MatchStatus[] = ["MATCHED", "UNRESOLVED", "NOT_MATCHED"];
 
 export function MatchesPage() {
+  const { t } = useI18n();
+  const status = useStatus();
   const [params, setParams] = useSearchParams();
   const raw = params.get("status");
   const active = STATUSES.includes(raw as MatchStatus) ? (raw as MatchStatus) : null;
@@ -24,8 +27,8 @@ export function MatchesPage() {
   const all = data?.matches ?? [];
   const shown = active ? all.filter((match) => match.match_status === active) : all;
 
-  const select = (status: MatchStatus | null) => {
-    if (status) params.set("status", status);
+  const select = (next: MatchStatus | null) => {
+    if (next) params.set("status", next);
     else params.delete("status");
     setParams(params, { replace: true });
   };
@@ -33,35 +36,38 @@ export function MatchesPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Results"
-        title="Opportunities"
-        subtitle="Every hypothesis the platform reconciled, across every run. Matched, not matched and unresolved are all first-class output — rejected opportunities are kept, never filtered away."
+        eyebrow={t.matches.eyebrow}
+        title={t.matches.title}
+        subtitle={t.matches.subtitle}
       />
 
       <Card>
         <div className="mb-5 border-b border-hairline pb-4">
           <div className="flex flex-wrap items-center gap-2">
             <Filter
-              label="All"
+              label={t.common.all}
               count={all.length}
               active={active === null}
               onClick={() => select(null)}
             />
-            {STATUSES.map((status) => (
-              <Filter
-                key={status}
-                label={MATCH_STATUS[status].label}
-                title={MATCH_STATUS[status].meaning}
-                count={all.filter((m) => m.match_status === status).length}
-                active={active === status}
-                onClick={() => select(status)}
-              />
-            ))}
+            {STATUSES.map((value) => {
+              const meta = status.fit(value);
+              return (
+                <Filter
+                  key={value}
+                  label={meta.label}
+                  title={meta.meaning}
+                  count={all.filter((m) => m.match_status === value).length}
+                  active={active === value}
+                  onClick={() => select(value)}
+                />
+              );
+            })}
           </div>
         </div>
 
         {error && !data ? (
-          <ErrorState error={error} onRetry={reload} context="The opportunity list" />
+          <ErrorState error={error} onRetry={reload} context={t.matches.error} />
         ) : loading || !data ? (
           <SkeletonRows rows={8} />
         ) : (
@@ -70,22 +76,13 @@ export function MatchesPage() {
             showRun
             empty={
               <EmptyState
-                title={
-                  active
-                    ? `No ${MATCH_STATUS[active].label.toLowerCase()} opportunities`
-                    : "No opportunities yet"
-                }
-                description={
-                  active
-                    ? "Try another filter — every reconciled opportunity lands in exactly one of these three buckets."
-                    : "Opportunities appear once a run reaches verification and matching."
-                }
+                title={active ? t.matches.filteredEmpty : t.matches.empty}
+                description={active ? t.matches.filteredHelp : t.matches.emptyHelp}
               />
             }
           />
         )}
       </Card>
-
     </>
   );
 }

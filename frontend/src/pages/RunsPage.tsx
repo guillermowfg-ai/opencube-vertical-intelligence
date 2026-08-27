@@ -1,13 +1,14 @@
-/** Runs — every discovery-to-matching sweep, newest first. */
+/** Analyses -- every sweep across this market, newest first. */
 
 import { api, useResource } from "../lib/api";
 import { isRunLive } from "../lib/domain";
-import { pluralize } from "../lib/format";
+import { fill, useI18n } from "../i18n";
 import { RunsTable } from "../components/RunsTable";
 import { Card, PageHeader } from "../components/ui/primitives";
 import { EmptyState, ErrorState, SkeletonRows } from "../components/ui/states";
 
 export function RunsPage() {
+  const { t } = useI18n();
   const { data, error, loading, reload } = useResource(
     (signal) => api.runs(50, signal),
     [],
@@ -19,19 +20,21 @@ export function RunsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Activity"
-        title="Runs"
-        subtitle="A run discovers businesses in the active vertical, investigates each one, verifies what it found against independent sources, and reconciles the two into commercial eligibility."
+        eyebrow={t.runs.eyebrow}
+        title={t.runs.title}
+        subtitle={t.runs.subtitle}
         meta={
           data ? (
             <p className="text-sm text-ink-soft">
-              <span className="numerals font-medium text-ink">{data.total}</span>{" "}
-              {pluralize(data.total, "run")}
+              <span className="numerals font-medium text-ink">
+                {data.total === 1 ? t.runs.countOne : fill(t.runs.count, { count: data.total })}
+              </span>
               {live > 0 ? (
                 <>
                   {" · "}
-                  <span className="numerals font-medium text-blue-700">{live}</span> in
-                  flight
+                  <span className="numerals font-medium text-cyan-700">
+                    {fill(t.runs.live, { count: live })}
+                  </span>
                 </>
               ) : null}
             </p>
@@ -41,18 +44,13 @@ export function RunsPage() {
 
       <Card>
         {error && !data ? (
-          <ErrorState error={error} onRetry={reload} context="The run list" />
+          <ErrorState error={error} onRetry={reload} context={t.runs.error} />
         ) : loading || !data ? (
           <SkeletonRows rows={6} />
         ) : (
           <RunsTable
             runs={data.runs}
-            empty={
-              <EmptyState
-                title="No runs yet"
-                description="Runs are created through the backend API (POST /runs), which stays off the browser surface in V1. Once a run exists it appears here with live progress."
-              />
-            }
+            empty={<EmptyState title={t.runs.empty} description={t.runs.emptyHelp} />}
           />
         )}
       </Card>

@@ -1,34 +1,45 @@
 /**
- * Opportunity detail — the page that has to be trustworthy.
+ * Opportunity detail -- the page that has to be trustworthy.
  *
- * It is laid out as the decision chain, in order: what was claimed, what was
- * observed, what an independent source said, and what the deterministic
- * reconciliation concluded. The reconciliation is shown as the three inputs
- * that produced it plus the backend's own reason code and sentence — the
- * interface never restates the logic in its own words, because a second
- * wording of a frozen matrix is a second matrix.
+ * Laid out as the chain that produced the answer: what we concluded, what we
+ * actually saw, what someone outside the business said, and why that adds up
+ * to the outcome. The interface never restates the decision logic in its own
+ * words -- it shows the reason code and the back end's own sentence, because a
+ * second wording of a fixed rule is a second rule.
  */
 
 import { Link, useParams } from "react-router-dom";
 import { api, useResource } from "../lib/api";
-import {
-  MATCH_STATUS,
-  OPPORTUNITY_STATUS,
-  VERIFICATION_STATE,
-  evidenceRoleMeta,
-  opportunityTypeLabel,
-  reasonCodeLabel,
-  verificationStateOf,
-} from "../lib/domain";
+import { reasonCodeLabel, verificationStateOf } from "../lib/domain";
+import { useStatus } from "../lib/useStatus";
+import { fill, useI18n } from "../i18n";
 import { formatConfidence, formatDateTime, hostnameOf } from "../lib/format";
 import type { EvidenceItem, MatchDetail } from "../lib/types";
 import { Badge, Chip, StatusBadge } from "../components/ui/StatusBadge";
-import { Card, ExternalLink, KeyValue, MetaItem, Mono, PageHeader, SectionHeading } from "../components/ui/primitives";
+import {
+  Card,
+  ExternalLink,
+  KeyValue,
+  MetaItem,
+  Mono,
+  PageHeader,
+  SectionHeading,
+} from "../components/ui/primitives";
 import { cx } from "../lib/cx";
 import { EmptyState, ErrorState, SkeletonPanel } from "../components/ui/states";
+import type { Dictionary } from "../i18n";
+
+/** Looks up the plain-language reading of a reason code. Returns undefined for
+ * a code this build has no wording for, so the stored sentence is shown
+ * instead of nothing. */
+function plainReason(t: Dictionary, code: string): string | undefined {
+  return (t.reasons as Record<string, string | undefined>)[code];
+}
 
 export function MatchDetailPage() {
   const { matchId = "" } = useParams();
+  const { t, locale } = useI18n();
+  const status = useStatus();
   const { data, error, loading, reload } = useResource(
     (signal) => api.match(matchId, signal),
     [matchId],
@@ -37,8 +48,8 @@ export function MatchDetailPage() {
   if (error && !data) {
     return (
       <>
-        <PageHeader eyebrow="Opportunity" title="Opportunity" />
-        <ErrorState error={error} onRetry={reload} context="This opportunity" />
+        <PageHeader eyebrow={t.matchDetail.eyebrow} title={t.common.opportunity} />
+        <ErrorState error={error} onRetry={reload} context={t.matchDetail.error} />
       </>
     );
   }
@@ -46,7 +57,7 @@ export function MatchDetailPage() {
   if (loading || !data) {
     return (
       <>
-        <PageHeader eyebrow="Opportunity" title="Opportunity" />
+        <PageHeader eyebrow={t.matchDetail.eyebrow} title={t.common.opportunity} />
         <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
           <div className="space-y-6">
             <SkeletonPanel lines={3} />
@@ -59,25 +70,26 @@ export function MatchDetailPage() {
   }
 
   const { match, business, opportunity, hypothesis, verification } = data;
-  const verificationState = verificationStateOf(match);
+  const secondOpinionState = verificationStateOf(match);
 
   return (
     <>
       <PageHeader
-        eyebrow="Opportunity"
+        eyebrow={t.matchDetail.eyebrow}
         title={opportunity?.name ?? match.opportunity_id}
         subtitle={
           business ? (
             <>
-              at <span className="font-medium text-ink">{business.display_name}</span>
+              {t.matchDetail.at}{" "}
+              <span className="font-medium text-ink">{business.display_name}</span>
               {business.formatted_address ? ` · ${business.formatted_address}` : null}
             </>
           ) : undefined
         }
-        actions={<StatusBadge meta={MATCH_STATUS[match.match_status]} />}
+        actions={<StatusBadge meta={status.fit(match.match_status)} />}
         meta={
           <>
-            <MetaItem label="Run">
+            <MetaItem label={t.matchDetail.meta.run}>
               {data.run ? (
                 <Link
                   to={`/runs/${encodeURIComponent(data.run.run_id)}`}
@@ -89,11 +101,10 @@ export function MatchDetailPage() {
                 "—"
               )}
             </MetaItem>
-            <MetaItem label="Opportunity type">
-              {opportunityTypeLabel(match.opportunity_type)}
+            <MetaItem label={t.matchDetail.meta.decided}>
+              {formatDateTime(locale, match.created_at)}
             </MetaItem>
-            <MetaItem label="Decided">{formatDateTime(match.created_at)}</MetaItem>
-            <MetaItem label="Match ID">
+            <MetaItem label={t.matchDetail.meta.id}>
               <Mono>{match.match_id}</Mono>
             </MetaItem>
           </>
@@ -102,14 +113,14 @@ export function MatchDetailPage() {
 
       <ReconciliationStrip detail={data} />
 
-      <div className="mt-8 grid items-start gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+      <div className="mt-6 grid items-start gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div className="space-y-6">
           <Card>
             <SectionHeading
-              eyebrow="Step 1 · Investigator"
-              title="The hypothesis"
-              description="An interpretation of the evidence below. Always traceable to it, never asserted on its own."
-              action={<StatusBadge meta={OPPORTUNITY_STATUS[match.original_status]} />}
+              eyebrow={t.matchDetail.step1.eyebrow}
+              title={t.matchDetail.step1.title}
+              description={t.matchDetail.step1.description}
+              action={<StatusBadge meta={status.finding(match.original_status)} />}
             />
             {hypothesis ? (
               <>
@@ -117,20 +128,20 @@ export function MatchDetailPage() {
                   {hypothesis.statement}
                 </blockquote>
                 <dl className="mt-4 grid grid-cols-2 gap-4 border-t border-hairline pt-4 sm:grid-cols-4">
-                  <KeyValue label="Model confidence">
+                  <KeyValue label={t.matchDetail.step1.confidence}>
                     <span className="numerals">{formatConfidence(hypothesis.confidence)}</span>
                   </KeyValue>
-                  <KeyValue label="Supporting">
+                  <KeyValue label={t.matchDetail.step1.supporting}>
                     <span className="numerals">
                       {hypothesis.supporting_evidence_ids.length}
                     </span>
                   </KeyValue>
-                  <KeyValue label="Contradicting">
+                  <KeyValue label={t.matchDetail.step1.contradicting}>
                     <span className="numerals">
                       {hypothesis.contradicting_evidence_ids.length}
                     </span>
                   </KeyValue>
-                  <KeyValue label="Hypothesis ID">
+                  <KeyValue label={t.matchDetail.step1.id}>
                     <Mono>{hypothesis.hypothesis_id}</Mono>
                   </KeyValue>
                 </dl>
@@ -138,31 +149,31 @@ export function MatchDetailPage() {
             ) : (
               <EmptyState
                 compact
-                title="The hypothesis record could not be read"
-                description="The match still carries the evidence IDs it was built from, shown below."
+                title={t.matchDetail.step1.empty}
+                description={t.matchDetail.step1.emptyHelp}
               />
             )}
           </Card>
 
           <Card>
             <SectionHeading
-              eyebrow="Step 2 · Evidence"
-              title="What was observed"
-              description="Factual, source-attributed observations from the business's own public surface. Never an interpretation."
+              eyebrow={t.matchDetail.step2.eyebrow}
+              title={t.matchDetail.step2.title}
+              description={t.matchDetail.step2.description}
             />
             <EvidenceList
               items={data.hypothesis_evidence}
-              emptyTitle="No evidence was attached"
-              emptyDescription="This hypothesis was recorded without citable observations — which is itself why a status like insufficient evidence exists."
+              emptyTitle={t.matchDetail.step2.empty}
+              emptyDescription={t.matchDetail.step2.emptyHelp}
             />
           </Card>
 
           <Card>
             <SectionHeading
-              eyebrow="Step 3 · Verification loop"
-              title="What an independent source said"
-              description="Read only from sources outside the business's own control. The business's own site can never verify itself."
-              action={<StatusBadge meta={VERIFICATION_STATE[verificationState]} />}
+              eyebrow={t.matchDetail.step3.eyebrow}
+              title={t.matchDetail.step3.title}
+              description={t.matchDetail.step3.description}
+              action={<StatusBadge meta={status.secondOpinion(secondOpinionState)} />}
             />
             {verification ? (
               <VerificationPanel
@@ -172,8 +183,8 @@ export function MatchDetailPage() {
             ) : (
               <EmptyState
                 compact
-                title="No verification was attempted"
-                description="This hypothesis went to reconciliation on the Investigator's evidence alone, and the match reason code says so."
+                title={t.matchDetail.step3.empty}
+                description={t.matchDetail.step3.emptyHelp}
               />
             )}
           </Card>
@@ -182,44 +193,63 @@ export function MatchDetailPage() {
         <div className="space-y-6">
           <Card>
             <SectionHeading
-              eyebrow="Step 4 · Matcher"
-              title="Why this outcome"
-              description="Deterministic: the same three inputs always produce this same cell."
+              eyebrow={t.matchDetail.step4.eyebrow}
+              title={t.matchDetail.step4.title}
+              description={t.matchDetail.step4.description}
             />
             <div className="rounded-xl bg-canvas p-4">
-              <p className="eyebrow">Reason code</p>
+              <p className="eyebrow">{t.matchDetail.step4.reasonCode}</p>
               <p className="mt-1 text-sm font-semibold text-ink">
                 {reasonCodeLabel(match.reason_code)}
               </p>
               <Mono className="mt-2 inline-block">{match.reason_code}</Mono>
             </div>
-            <p className="mt-4 text-sm leading-relaxed text-ink-soft">{match.reasoning}</p>
+            <p className="mt-4 text-sm leading-relaxed text-ink">
+              {plainReason(t, match.reason_code) ?? match.reasoning}
+            </p>
+            {/* The stored sentence is kept verbatim and never edited. The plain
+                reading above is a translation of the same fixed cell -- it is
+                also the only way a Spanish screen can explain the decision,
+                since the stored wording is English-only. */}
+            <details className="mt-3">
+              <summary className="cursor-pointer text-xs font-medium text-ink-muted transition hover:text-ink-soft">
+                {t.matchDetail.step4.exactWording}
+              </summary>
+              <p className="mt-2 text-xs leading-relaxed text-ink-muted">{match.reasoning}</p>
+            </details>
             <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50/60 px-3.5 py-3 text-xs leading-relaxed text-amber-900">
-              Match status carries commercial eligibility only. Whether to contact this
-              business remains a human decision, made outside this system.
+              {t.matchDetail.step4.caveat}
             </p>
           </Card>
 
           <Card>
             <SectionHeading
-              title="OpenCube capability"
-              description="Taxonomy: which capability corresponds to this opportunity type. Not a finding that this business needs it."
+              title={t.matchDetail.capability.title}
+              description={t.matchDetail.capability.description}
             />
             {data.primary_capability ? (
-              <div>
-                <p className="text-sm font-medium text-ink">
-                  {data.primary_capability.label}
-                </p>
-                <Mono className="mt-1.5 inline-block">
-                  {data.primary_capability.capability_id}
-                </Mono>
+              <div className="flex items-center gap-3">
+                <span
+                  aria-hidden="true"
+                  className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600"
+                >
+                  <CubeGlyph />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-ink">
+                    {data.primary_capability.label}
+                  </p>
+                  <Mono className="mt-1 inline-block">
+                    {data.primary_capability.capability_id}
+                  </Mono>
+                </div>
               </div>
             ) : (
-              <p className="text-sm text-ink-muted">No capability mapping recorded.</p>
+              <p className="text-sm text-ink-muted">{t.matchDetail.capability.empty}</p>
             )}
             {data.supporting_capabilities.length > 0 ? (
               <div className="mt-4 border-t border-hairline pt-4">
-                <p className="eyebrow mb-2">Supporting</p>
+                <p className="eyebrow mb-2">{t.matchDetail.capability.supporting}</p>
                 <div className="flex flex-wrap gap-1.5">
                   {data.supporting_capabilities.map((capability) => (
                     <Chip key={capability.capability_id}>{capability.label}</Chip>
@@ -231,37 +261,35 @@ export function MatchDetailPage() {
 
           {business ? (
             <Card>
-              <SectionHeading title="Business" />
+              <SectionHeading title={t.matchDetail.business.title} />
               <dl className="divide-y divide-hairline">
-                <KeyValue label="Name">{business.display_name}</KeyValue>
+                <KeyValue label={t.matchDetail.business.name}>{business.display_name}</KeyValue>
                 {business.formatted_address ? (
-                  <KeyValue label="Address">{business.formatted_address}</KeyValue>
+                  <KeyValue label={t.matchDetail.business.address}>
+                    {business.formatted_address}
+                  </KeyValue>
                 ) : null}
-                <KeyValue label="Website">
+                <KeyValue label={t.matchDetail.business.website}>
                   {business.website_url ? (
                     <ExternalLink href={business.website_url}>
                       {hostnameOf(business.website_url)}
                     </ExternalLink>
                   ) : (
-                    <span
-                      className="text-ink-muted"
-                      title="No website was found — itself a publicly observable fact."
-                    >
-                      None found
+                    <span className="text-ink-muted" title={t.common.noWebsiteHelp}>
+                      {t.common.noWebsite}
                     </span>
                   )}
                 </KeyValue>
                 {business.phone_number ? (
-                  <KeyValue label="Phone">{business.phone_number}</KeyValue>
-                ) : null}
-                {business.maps_url ? (
-                  <KeyValue label="Maps">
-                    <ExternalLink href={business.maps_url}>Open listing</ExternalLink>
+                  <KeyValue label={t.matchDetail.business.phone}>
+                    {business.phone_number}
                   </KeyValue>
                 ) : null}
-                <KeyValue label="Business ID">
-                  <Mono>{business.business_id}</Mono>
-                </KeyValue>
+                {business.maps_url ? (
+                  <KeyValue label={t.matchDetail.business.maps}>
+                    <ExternalLink href={business.maps_url}>{t.common.openListing}</ExternalLink>
+                  </KeyValue>
+                ) : null}
               </dl>
             </Card>
           ) : null}
@@ -269,27 +297,28 @@ export function MatchDetailPage() {
           {opportunity ? (
             <Card>
               <SectionHeading
-                title="Catalog definition"
-                description="The declarative definition the model was asked to evaluate. It does not invent opportunity categories."
+                title={t.matchDetail.definition.title}
+                description={t.matchDetail.definition.description}
               />
-              <p className="text-sm leading-relaxed text-ink-soft">
-                {opportunity.description}
-              </p>
+              <p className="text-sm leading-relaxed text-ink-soft">{opportunity.description}</p>
               <div className="mt-4 space-y-4 border-t border-hairline pt-4">
-                <SignalList title="Evidence signals" items={opportunity.evidence_signals} />
                 <SignalList
-                  title="Contradiction signals"
+                  title={t.matchDetail.definition.evidenceSignals}
+                  items={opportunity.evidence_signals}
+                />
+                <SignalList
+                  title={t.matchDetail.definition.contradictionSignals}
                   items={opportunity.contradiction_signals}
                 />
               </div>
               <div className="mt-4 flex flex-wrap gap-1.5 border-t border-hairline pt-4">
                 <Chip>
                   {opportunity.publicly_observable
-                    ? "Publicly observable"
-                    : "Not publicly observable"}
+                    ? t.matchDetail.definition.publiclyObservable
+                    : t.matchDetail.definition.notPubliclyObservable}
                 </Chip>
                 {opportunity.requires_independent_verification ? (
-                  <Chip>Requires independent verification</Chip>
+                  <Chip>{t.matchDetail.definition.requiresVerification}</Chip>
                 ) : null}
               </div>
             </Card>
@@ -301,25 +330,18 @@ export function MatchDetailPage() {
 }
 
 function ReconciliationStrip({ detail }: { detail: MatchDetail }) {
+  const { t } = useI18n();
+  const status = useStatus();
   const { match } = detail;
-  const state = verificationStateOf(match);
 
   const steps = [
+    { key: "finding", caption: t.matchDetail.strip.finding, meta: status.finding(match.original_status) },
     {
-      key: "investigator",
-      caption: "Investigator concluded",
-      meta: OPPORTUNITY_STATUS[match.original_status],
+      key: "secondOpinion",
+      caption: t.matchDetail.strip.secondOpinion,
+      meta: status.secondOpinion(verificationStateOf(match)),
     },
-    {
-      key: "verification",
-      caption: "Independent source",
-      meta: VERIFICATION_STATE[state],
-    },
-    {
-      key: "match",
-      caption: "Commercial eligibility",
-      meta: MATCH_STATUS[match.match_status],
-    },
+    { key: "fit", caption: t.matchDetail.strip.fit, meta: status.fit(match.match_status) },
   ];
 
   return (
@@ -338,15 +360,13 @@ function ReconciliationStrip({ detail }: { detail: MatchDetail }) {
             <div className="mt-2">
               <StatusBadge meta={step.meta} />
             </div>
-            <p className="mt-2 text-xs leading-relaxed text-ink-muted">
-              {step.meta.meaning}
-            </p>
+            <p className="mt-2 text-xs leading-relaxed text-ink-muted">{step.meta.meaning}</p>
           </div>
           {index < steps.length - 1 ? (
             <svg
               viewBox="0 0 16 16"
               aria-hidden="true"
-              className="hidden size-4 shrink-0 text-ink-muted sm:block"
+              className="hidden size-4 shrink-0 text-brand-400 sm:block"
             >
               <path
                 d="M3 8h10M9 4l4 4-4 4"
@@ -373,6 +393,9 @@ function EvidenceList({
   emptyTitle: string;
   emptyDescription: string;
 }) {
+  const { t, locale } = useI18n();
+  const status = useStatus();
+
   if (items.length === 0) {
     return <EmptyState compact title={emptyTitle} description={emptyDescription} />;
   }
@@ -380,25 +403,26 @@ function EvidenceList({
   return (
     <ol className="space-y-3">
       {items.map((item) => {
-        const role = evidenceRoleMeta(item.role);
+        const role = status.evidenceRole(item.role);
         return (
           <li key={item.evidence_id} className="rounded-xl border border-hairline bg-canvas p-4">
             <div className="mb-2.5 flex flex-wrap items-center gap-2">
               <Badge tone={role.tone} title={role.meaning} dot>
                 {role.label}
               </Badge>
-              <Chip title={`Source type: ${item.source_type}`}>{item.source_type}</Chip>
+              <Chip title={`${t.common.sourceType}: ${item.source_type}`}>
+                {item.source_type}
+              </Chip>
               <span className="ml-auto text-xs text-ink-muted">
-                {formatDateTime(item.retrieved_at)}
+                {formatDateTime(locale, item.retrieved_at)}
               </span>
             </div>
             <p className="text-sm leading-relaxed text-ink">{item.observation}</p>
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-hairline pt-3 text-xs">
               <ExternalLink href={item.source_url}>{hostnameOf(item.source_url)}</ExternalLink>
               <span className="text-ink-muted">
-                collected by <span className="font-medium">{item.collected_by}</span>
+                {t.common.collectedBy} <span className="font-medium">{item.collected_by}</span>
               </span>
-              <Mono className="ml-auto">{item.evidence_id}</Mono>
             </div>
           </li>
         );
@@ -414,19 +438,20 @@ function VerificationPanel({
   verification: NonNullable<MatchDetail["verification"]>;
   evidence: EvidenceItem[];
 }) {
+  const { t } = useI18n();
+  const copy = t.matchDetail.step3;
+
   return (
     <>
       <div className="rounded-xl bg-canvas p-4">
-        <p className="eyebrow">Question put to independent sources</p>
+        <p className="eyebrow">{copy.question}</p>
         <p className="mt-1.5 text-sm leading-relaxed text-ink">
           {verification.verification_target}
         </p>
       </div>
 
       {verification.reasoning ? (
-        <p className="mt-4 text-sm leading-relaxed text-ink-soft">
-          {verification.reasoning}
-        </p>
+        <p className="mt-4 text-sm leading-relaxed text-ink-soft">{verification.reasoning}</p>
       ) : null}
 
       {verification.failure_reason ? (
@@ -436,41 +461,40 @@ function VerificationPanel({
       ) : null}
 
       {verification.no_independent_source_found ? (
-        <p className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm leading-relaxed text-slate-700">
-          No source independent of the business could be found. This is deliberately
-          recorded as its own fact, not as inconclusive evidence.
+        <p className="mt-4 rounded-lg border border-violet-200 bg-violet-50/60 px-3.5 py-3 text-sm leading-relaxed text-violet-900">
+          {copy.noSource}
         </p>
       ) : null}
 
       <dl className="mt-4 grid grid-cols-2 gap-4 border-t border-hairline pt-4 sm:grid-cols-4">
-        <KeyValue label="Independent sources">
+        <KeyValue label={copy.sources}>
           <span className="numerals">{verification.independent_sources_fetched}</span>
         </KeyValue>
-        <KeyValue label="Candidates found">
+        <KeyValue label={copy.candidates}>
           <span className="numerals">{verification.candidate_source_urls.length}</span>
         </KeyValue>
-        <KeyValue label="Rejected">
+        <KeyValue label={copy.rejected}>
           <span className="numerals">{verification.rejected_sources.length}</span>
         </KeyValue>
-        <KeyValue label="Confidence">
+        <KeyValue label={copy.confidence}>
           <span className="numerals">{formatConfidence(verification.confidence)}</span>
         </KeyValue>
       </dl>
 
       {evidence.length > 0 ? (
         <div className="mt-5 border-t border-hairline pt-5">
-          <p className="eyebrow mb-3">Independent evidence</p>
+          <p className="eyebrow mb-3">{copy.independentEvidence}</p>
           <EvidenceList
             items={evidence}
-            emptyTitle="No independent evidence"
-            emptyDescription="Nothing was retained from this attempt."
+            emptyTitle={copy.empty}
+            emptyDescription={copy.emptyHelp}
           />
         </div>
       ) : null}
 
       {verification.executed_search_queries.length > 0 ? (
         <div className="mt-5 border-t border-hairline pt-5">
-          <p className="eyebrow mb-2">Search queries executed</p>
+          <p className="eyebrow mb-2">{copy.queries}</p>
           <ul className="flex flex-wrap gap-1.5">
             {verification.executed_search_queries.map((query) => (
               <li key={query}>
@@ -484,8 +508,7 @@ function VerificationPanel({
       {verification.rejected_sources.length > 0 ? (
         <details className="mt-5 border-t border-hairline pt-5">
           <summary className="cursor-pointer text-sm font-medium text-ink-soft transition hover:text-ink">
-            Sources rejected by the independence filter (
-            {verification.rejected_sources.length})
+            {fill(copy.rejectedTitle, { count: verification.rejected_sources.length })}
           </summary>
           <ul className="mt-3 space-y-2">
             {verification.rejected_sources.map((source) => (
@@ -512,11 +535,28 @@ function SignalList({ title, items }: { title: string; items: string[] }) {
       <ul className="space-y-1.5">
         {items.map((item) => (
           <li key={item} className="flex gap-2 text-xs leading-relaxed text-ink-soft">
-            <span aria-hidden="true" className="mt-1.5 size-1 shrink-0 rounded-full bg-ink-muted" />
+            <span
+              aria-hidden="true"
+              className="mt-1.5 size-1 shrink-0 rounded-full bg-ink-muted"
+            />
             {item}
           </li>
         ))}
       </ul>
     </div>
+  );
+}
+
+function CubeGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="size-5">
+      <path
+        d="M12 3.4 20 7.7v8.6L12 20.6 4 16.3V7.7zM4 7.7l8 4.3 8-4.3M12 12v8.6"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }

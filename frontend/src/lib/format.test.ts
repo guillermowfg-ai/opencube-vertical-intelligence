@@ -4,9 +4,11 @@ import {
   formatDuration,
   formatRelative,
   hostnameOf,
-  pluralize,
   shortId,
 } from "./format";
+
+const EN = "en-US";
+const ES = "es-419";
 
 describe("formatDuration", () => {
   it("reports seconds, minutes and hours the way an operator says them", () => {
@@ -29,14 +31,22 @@ describe("formatDuration", () => {
 describe("formatRelative", () => {
   it("scales the unit to the distance", () => {
     const now = new Date("2026-08-27T12:00:00+00:00").getTime();
-    expect(formatRelative("2026-08-27T11:59:30+00:00", now)).toMatch(/second/);
-    expect(formatRelative("2026-08-27T11:20:00+00:00", now)).toMatch(/minute/);
-    expect(formatRelative("2026-08-24T12:00:00+00:00", now)).toMatch(/day/);
+    expect(formatRelative(EN, "2026-08-27T11:59:30+00:00", now)).toMatch(/second/);
+    expect(formatRelative(EN, "2026-08-27T11:20:00+00:00", now)).toMatch(/minute/);
+    expect(formatRelative(EN, "2026-08-24T12:00:00+00:00", now)).toMatch(/day/);
+  });
+
+  it("follows the chosen language, so a Spanish screen is fully Spanish", () => {
+    const now = new Date("2026-08-27T12:00:00+00:00").getTime();
+    const english = formatRelative(EN, "2026-08-24T12:00:00+00:00", now);
+    const spanish = formatRelative(ES, "2026-08-24T12:00:00+00:00", now);
+    expect(english).not.toBe(spanish);
+    expect(spanish).toMatch(/día|dias|días/i);
   });
 
   it("passes unparseable input straight through rather than showing a wrong date", () => {
-    expect(formatRelative("not-a-date")).toBe("not-a-date");
-    expect(formatRelative(null)).toBe("—");
+    expect(formatRelative(EN, "not-a-date")).toBe("not-a-date");
+    expect(formatRelative(EN, null)).toBe("—");
   });
 });
 
@@ -63,21 +73,13 @@ describe("hostnameOf", () => {
 
 describe("shortId", () => {
   it("keeps both ends so near-identical IDs stay distinguishable", () => {
-    const a = shortId("run-2026-08-24__brickell-glow", 6);
-    const b = shortId("run-2026-08-24__brickell-lux", 6);
+    const a = shortId("5fc062f1-3f5c-46ae-8f7f-9981ab11b669", 6);
+    const b = shortId("5fc062f1-3f5c-46ae-8f7f-9981ab00000", 6);
     expect(a).not.toBe(b);
-    expect(a.startsWith("run-20")).toBe(true);
+    expect(a.startsWith("5fc062")).toBe(true);
   });
 
   it("leaves short values alone", () => {
     expect(shortId("abc")).toBe("abc");
-  });
-});
-
-describe("pluralize", () => {
-  it("handles the irregular case the KPI row needs", () => {
-    expect(pluralize(1, "hypothesis", "hypotheses")).toBe("hypothesis");
-    expect(pluralize(3, "hypothesis", "hypotheses")).toBe("hypotheses");
-    expect(pluralize(2, "run")).toBe("runs");
   });
 });

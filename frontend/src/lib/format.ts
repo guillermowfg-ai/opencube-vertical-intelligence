@@ -1,34 +1,40 @@
-/** Display formatting. Never rounds a number that a reader might compare. */
+/**
+ * Display formatting. Never rounds a number that a reader might compare.
+ *
+ * Every function takes a locale, because the language switcher has to change
+ * dates and relative times too — a Spanish screen showing "3 days ago" is a
+ * half-translated screen.
+ */
 
-const DATE_TIME = new Intl.DateTimeFormat(undefined, {
-  year: "numeric",
-  month: "short",
-  day: "2-digit",
-  hour: "2-digit",
-  minute: "2-digit",
-});
-
-const DATE_ONLY = new Intl.DateTimeFormat(undefined, {
-  year: "numeric",
-  month: "short",
-  day: "2-digit",
-});
-
-export function formatDateTime(value: string | null | undefined): string {
+export function formatDateTime(locale: string, value: string | null | undefined): string {
   if (!value) return "—";
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return value;
-  return DATE_TIME.format(parsed);
+  return new Intl.DateTimeFormat(locale, {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(parsed);
 }
 
-export function formatDate(value: string | null | undefined): string {
+export function formatDate(locale: string, value: string | null | undefined): string {
   if (!value) return "—";
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return value;
-  return DATE_ONLY.format(parsed);
+  return new Intl.DateTimeFormat(locale, {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+  }).format(parsed);
 }
 
-export function formatRelative(value: string | null | undefined, now = Date.now()): string {
+export function formatRelative(
+  locale: string,
+  value: string | null | undefined,
+  now = Date.now(),
+): string {
   if (!value) return "—";
   const parsed = new Date(value).getTime();
   if (Number.isNaN(parsed)) return value;
@@ -47,17 +53,23 @@ export function formatRelative(value: string | null | undefined, now = Date.now(
   let amount = seconds;
   for (const [unit, step] of units) {
     if (Math.abs(amount) < step || unit === "year") {
-      return new Intl.RelativeTimeFormat(undefined, { numeric: "auto" }).format(
+      return new Intl.RelativeTimeFormat(locale, { numeric: "auto" }).format(
         Math.round(amount),
         unit,
       );
     }
     amount /= step;
   }
-  return DATE_ONLY.format(parsed);
+  return formatDate(locale, value);
 }
 
-/** Elapsed time between two timestamps, as an operator would say it. */
+/**
+ * Elapsed time between two timestamps.
+ *
+ * The unit suffixes are intentionally not translated: h/m/s read the same in
+ * both supported languages, and a localised "1h 14m" gains nothing while
+ * risking a wider string in a fixed table column.
+ */
 export function formatDuration(
   from: string | null | undefined,
   to: string | null | undefined,
@@ -79,18 +91,13 @@ export function formatDuration(
   return remainder ? `${hours}h ${remainder}m` : `${hours}h`;
 }
 
-export function formatNumber(value: number | null | undefined): string {
+export function formatNumber(locale: string, value: number | null | undefined): string {
   if (value === null || value === undefined) return "—";
-  return new Intl.NumberFormat().format(value);
+  return new Intl.NumberFormat(locale).format(value);
 }
 
-export function formatPercent(value: number | null | undefined, digits = 0): string {
-  if (value === null || value === undefined) return "—";
-  return `${(value * 100).toFixed(digits)}%`;
-}
-
-/** Confidence is model output; showing it to two decimals implies a precision
- * it does not have, so it renders as a whole percentage. */
+/** Confidence is model output; showing decimals implies a precision it does
+ * not have, so it renders as a whole percentage. */
 export function formatConfidence(value: number | null | undefined): string {
   if (value === null || value === undefined) return "—";
   return `${Math.round(value * 100)}%`;
@@ -111,8 +118,4 @@ export function shortId(value: string | null | undefined, keep = 8): string {
   if (!value) return "—";
   if (value.length <= keep * 2 + 1) return value;
   return `${value.slice(0, keep)}…${value.slice(-keep)}`;
-}
-
-export function pluralize(count: number, singular: string, plural?: string): string {
-  return count === 1 ? singular : (plural ?? `${singular}s`);
 }

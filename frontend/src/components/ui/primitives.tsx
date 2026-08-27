@@ -60,8 +60,14 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <header className="mb-7 border-b border-hairline pb-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <header className="relative mb-7 overflow-hidden border-b border-hairline pb-6">
+      {/* Decorative isometric lattice, fading out to the left so it never
+          competes with the title. Carries no data. */}
+      <span
+        aria-hidden="true"
+        className="lattice pointer-events-none absolute inset-y-0 right-0 hidden w-2/5 [mask-image:linear-gradient(to_left,black,transparent)] sm:block"
+      />
+      <div className="relative flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           {eyebrow ? <p className="eyebrow mb-2">{eyebrow}</p> : null}
           <h1 className="text-2xl font-semibold tracking-tight text-ink sm:text-[1.75rem]">
@@ -75,7 +81,9 @@ export function PageHeader({
         </div>
         {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
       </div>
-      {meta ? <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2">{meta}</div> : null}
+      {meta ? (
+        <div className="relative mt-4 flex flex-wrap items-center gap-x-6 gap-y-2">{meta}</div>
+      ) : null}
     </header>
   );
 }

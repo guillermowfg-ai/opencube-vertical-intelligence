@@ -1,14 +1,16 @@
 @import "tailwindcss";
 
 /*
- * OpenCube Intel — visual system.
+ * OpenCube Intel - visual system.
  *
- * Light first. The single dark surface is the navigation rail, which earns it
- * by separating "where am I" from "what am I looking at". Orange is the brand
- * accent and is spent sparingly: active navigation, the primary action, and
- * the one number on a screen that matters most. Everything analytical is
- * carried by a restrained slate/teal/amber/rose family so a status colour
- * always means a status, never decoration.
+ * Light throughout, following the approved reference: a white navigation rail,
+ * a soft warm-grey canvas, white cards with soft shadows. Dark is spent on
+ * exactly one surface per screen -- the headline result panel -- where it
+ * earns its weight by making the single most important number unmissable.
+ *
+ * Orange is the brand accent: the logo, active navigation, links, the primary
+ * action, and the one number that matters most. It never paints a data mark,
+ * so it can never be mistaken for a status.
  */
 
 @theme {
@@ -24,22 +26,27 @@
   --color-brand-600: #ea580c;
   --color-brand-700: #c2410c;
 
-  --color-canvas: #f8fafc;
-  --color-canvas-alt: #f1f5f9;
+  --color-canvas: #f7f8fa;
+  --color-canvas-alt: #eef1f5;
   --color-surface: #ffffff;
-  --color-hairline: #e2e8f0;
+  --color-hairline: #e6e9ef;
 
   --color-ink: #111827;
   --color-ink-soft: #475569;
   --color-ink-muted: #94a3b8;
 
-  --color-rail: #0d1424;
-  --color-rail-soft: #161f33;
-  --color-rail-line: #1f2b42;
+  /* The one dark surface. Used for a single headline panel per screen, never
+     for chrome and never for a whole page. */
+  --color-vault: #0f1523;
+  --color-vault-soft: #1a2233;
+  --color-vault-line: #263048;
+  --color-vault-ink: #e8ecf4;
+  --color-vault-ink-muted: #8a97ae;
 
-  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.04), 0 1px 3px rgb(15 23 42 / 0.06);
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.03), 0 2px 8px -2px rgb(15 23 42 / 0.06);
   --shadow-lift: 0 4px 6px -2px rgb(15 23 42 / 0.05),
     0 12px 24px -8px rgb(15 23 42 / 0.12);
+  --shadow-vault: 0 8px 24px -8px rgb(15 21 35 / 0.4);
 }
 
 @layer base {
@@ -78,8 +85,17 @@
   .card {
     background-color: var(--color-surface);
     border: 1px solid var(--color-hairline);
-    border-radius: 0.875rem;
+    border-radius: 1rem;
     box-shadow: var(--shadow-card);
+  }
+
+  /* The dark headline panel. One per screen, at most. */
+  .vault {
+    background-color: var(--color-vault);
+    border: 1px solid var(--color-vault-line);
+    border-radius: 1rem;
+    box-shadow: var(--shadow-vault);
+    color: var(--color-vault-ink);
   }
 
   .hover-lift {
@@ -155,4 +171,41 @@
   );
   animation: shimmer 1.6s infinite;
   content: "";
+}
+
+/* The official OpenCube logo, displayed unmodified.
+ *
+ * The asset ships with a large empty canvas around the artwork and a baked-in
+ * near-white background, so it is cropped presentationally rather than edited:
+ * the file on disk stays byte-identical to the one in design-references/, and
+ * the near-white background is invisible on the white rail it sits on.
+ *
+ * Content bounding box measured from the PNG: x 225..1276, y 359..661 of
+ * 1448x1086. Every number below follows from those.
+ */
+.brand-logo {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  aspect-ratio: 1052 / 303;
+}
+
+.brand-logo img {
+  position: absolute;
+  left: -21.388%;
+  top: -118.482%;
+  width: 137.643%;
+  max-width: none;
+  height: auto;
+}
+
+/* A faint isometric lattice, used behind page headers so the product reads as
+   an intelligence surface rather than a generic admin panel. Purely
+   decorative: it carries no data and is hidden from assistive tech. */
+.lattice {
+  background-image:
+    linear-gradient(115deg, rgb(249 115 22 / 0.055) 0 1px, transparent 1px 100%),
+    linear-gradient(65deg, rgb(249 115 22 / 0.055) 0 1px, transparent 1px 100%),
+    linear-gradient(180deg, rgb(100 116 139 / 0.045) 0 1px, transparent 1px 100%);
+  background-size: 46px 80px, 46px 80px, 46px 80px;
 }
