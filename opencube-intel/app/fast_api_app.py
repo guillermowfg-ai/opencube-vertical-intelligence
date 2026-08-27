@@ -73,9 +73,15 @@ app.description = "API for interacting with the Agent opencube-intel"
 # there is one Cloud Run service, one deployment, and one identity. None of
 # these paths collide with the ADK-provided routes -- in particular ADK's
 # agent-invocation route is POST /run, which is distinct from POST /runs.
+from app.api.read_routes import router as frontend_read_router  # noqa: E402
 from app.api.routes import router as production_router  # noqa: E402
 
 app.include_router(production_router)
+
+# Frontend V1: read-only projections of the same Firestore documents. Kept in
+# a separate router so the accepted production surface above stays untouched,
+# and mounted after it so an existing path always wins a collision.
+app.include_router(frontend_read_router)
 
 
 # Main execution

@@ -131,6 +131,34 @@ class FakeStore:
             d for d in self.verifications.values() if d.get("hypothesis_id") == hypothesis_id
         ]
 
+    # --- read-only queries added for the frontend read API ---
+    def list_runs(self, limit: int | None = None) -> list[dict]:
+        return list(self.runs.values())[:limit]
+
+    def list_all_businesses(self, limit: int | None = None) -> list[dict]:
+        return list(self.businesses.values())[:limit]
+
+    def list_all_investigations(self, limit: int | None = None) -> list[dict]:
+        return list(self.investigations.values())[:limit]
+
+    def list_all_hypotheses(self, limit: int | None = None) -> list[dict]:
+        return list(self.hypotheses.values())[:limit]
+
+    def list_all_verifications(self, limit: int | None = None) -> list[dict]:
+        return list(self.verifications.values())[:limit]
+
+    def list_all_matches(self, limit: int | None = None) -> list[dict]:
+        return list(self.matches.values())[:limit]
+
+    def get_hypothesis(self, hypothesis_id: str) -> dict | None:
+        return self.hypotheses.get(hypothesis_id)
+
+    def get_verification(self, verification_id: str) -> dict | None:
+        return self.verifications.get(verification_id)
+
+    def get_match(self, match_id: str) -> dict | None:
+        return self.matches.get(match_id)
+
 
 _STORE_FUNCTIONS = (
     "save_run",
@@ -156,6 +184,15 @@ _STORE_FUNCTIONS = (
     "list_hypotheses_for_investigation",
     "list_usage_for_investigation",
     "list_verifications_for_hypothesis",
+    "list_runs",
+    "list_all_businesses",
+    "list_all_investigations",
+    "list_all_hypotheses",
+    "list_all_verifications",
+    "list_all_matches",
+    "get_hypothesis",
+    "get_verification",
+    "get_match",
 )
 
 

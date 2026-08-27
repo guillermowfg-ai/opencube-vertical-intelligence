@@ -173,3 +173,62 @@ def save_opportunity_match(match: OpportunityMatch) -> None:
 def list_matches_for_run(run_id: str) -> list[dict]:
     query = get_client().collection(OPPORTUNITY_MATCHES).where("run_id", "==", run_id)
     return [d.to_dict() for d in query.stream()]
+
+
+# ---------------------------------------------------------------------------
+# Read-only helpers added for the frontend (Frontend V1).
+#
+# Strictly additive: no new collection, no new document shape, no write path.
+# Everything here is a thin query over the same flat collections the accepted
+# milestones already write, kept in this module so the API layer never touches
+# the Firestore client directly.
+# ---------------------------------------------------------------------------
+
+
+def _list_all(collection: str, limit: int | None = None) -> list[dict]:
+    query = get_client().collection(collection)
+    if limit is not None:
+        query = query.limit(limit)
+    return [d.to_dict() for d in query.stream()]
+
+
+def list_runs(limit: int | None = None) -> list[dict]:
+    """Every Run document. Deliberately unordered here — `created_at` is an
+    ISO-8601 string written by the application, so ordering is done in the
+    API layer rather than requiring a Firestore index."""
+    return _list_all(RUNS, limit)
+
+
+def list_all_businesses(limit: int | None = None) -> list[dict]:
+    return _list_all(BUSINESSES, limit)
+
+
+def list_all_investigations(limit: int | None = None) -> list[dict]:
+    return _list_all(INVESTIGATIONS, limit)
+
+
+def list_all_hypotheses(limit: int | None = None) -> list[dict]:
+    return _list_all(HYPOTHESES, limit)
+
+
+def list_all_verifications(limit: int | None = None) -> list[dict]:
+    return _list_all(VERIFICATIONS, limit)
+
+
+def list_all_matches(limit: int | None = None) -> list[dict]:
+    return _list_all(OPPORTUNITY_MATCHES, limit)
+
+
+def get_hypothesis(hypothesis_id: str) -> dict | None:
+    doc = get_client().collection(HYPOTHESES).document(hypothesis_id).get()
+    return doc.to_dict() if doc.exists else None
+
+
+def get_verification(verification_id: str) -> dict | None:
+    doc = get_client().collection(VERIFICATIONS).document(verification_id).get()
+    return doc.to_dict() if doc.exists else None
+
+
+def get_match(match_id: str) -> dict | None:
+    doc = get_client().collection(OPPORTUNITY_MATCHES).document(match_id).get()
+    return doc.to_dict() if doc.exists else None
