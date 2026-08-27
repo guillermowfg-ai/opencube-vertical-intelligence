@@ -207,3 +207,80 @@
     own. `tests/unit/test_orchestrator_semantics.py` enforces this structurally, asserting via AST
     that the module neither calls the forbidden `firestore_store` writers nor references
     `MatchStatus`, `MatchReasonCode` or `VerificationOutcome` in code.
+
+## Frontend V1 Decisions
+
+35. **The frontend is a lens, never a second brain.** It never classifies a
+    hypothesis, decides a match, recomputes a count, or writes a document. Every
+    analytical value on screen was produced by the pipeline and persisted before
+    the browser asked for it. Where a derived value is genuinely needed, the
+    accepted engine produces it: verification display state comes from
+    `opportunity_matcher.classify_verification_state`, and the opportunity and
+    capability labels come from `catalog.MED_SPA_CATALOG` and
+    `capability_catalog.CAPABILITIES` rather than being restated in TypeScript.
+    The one thing the UI does not repeat at all is the reconciliation logic — it
+    renders the backend's own `reason_code` and `MATCH_REASONING` sentence,
+    because a second wording of a frozen matrix is a second matrix.
+
+36. **A separate read-only router, not an extension of the accepted one.**
+    `app/api/read_routes.py` adds `/overview`, `/runs`, `/runs/{id}/businesses`,
+    `/matches`, `/matches/{id}`, `/businesses` and `/catalog`. It is mounted
+    after `app/api/routes.py` so an existing path always wins a collision, and
+    the accepted production surface is byte-for-byte untouched — including
+    `MatchView`, which a frontend list screen needed a `run_id` on.
+    `MatchRowView` is its superset instead. `firestore_store` gained only
+    readers; `tests/unit/test_api_read_routes.py` asserts structurally that no
+    read route ever calls a `save_*`.
+
+37. **Aggregate routes stream whole collections and group in memory.** At ~10
+    businesses and ~30 matches per run the entire corpus is a few hundred
+    documents, so a per-request pass is cheaper than the composite indexes and
+    cursor plumbing the alternative needs. It is bounded by `_MAX_DOCS` and
+    reports `truncated` rather than silently returning a partial picture. This
+    is a scale-dependent decision and is the first thing to revisit when a run
+    stops being ~10 businesses.
+
+38. **Progress is polled, and a poll never blanks the screen.** `GET /runs/{id}`
+    already derives progress at read time (#24), so the live view simply asks
+    again every 15s. Previous data stays rendered while the next request is in
+    flight, and a *failed* poll keeps the last good screen with an error rather
+    than wiping it — a stale-but-real number is more useful to an operator than
+    an empty one, and both are labelled as what they are.
+
+39. **The three status layers are kept visually distinct, permanently.**
+    `OpportunityStatus`, the Verification state and `MatchStatus` never share a
+    colour role or a column. Collapsing them into one "result" column would hide
+    exactly the disagreement the Verification Loop exists to produce, and
+    `UNRESOLVED` reads as "needs a human", never as a rejection. Every status
+    badge carries its meaning as a tooltip, so the vocabulary is legible to
+    someone who did not build the pipeline.
+
+40. **`POST /runs` stays off the browser.** The UI has no write client at all —
+    there is no POST helper in `lib/api.ts` to misuse later. Creating a run is
+    authenticated and cost-bearing, and Cloud Run stays private (#11, #32); the
+    frontend is served from one origin with `/api` proxied, so no CORS posture
+    and no auth strategy changed for this milestone.
+
+41. **A run's lifecycle is read from `RunStatus`, never inferred from counts.**
+    The phase track renders the phase the backend reports. A `FAILED` run is
+    therefore drawn with its earlier phases complete and only the terminal node
+    failed, which is the honest picture under #30: a failed run still produced
+    verified, matched results, and the UI says so in words on the run page.
+
+42. **`frontend/src/lib/` is re-included in `.gitignore` on purpose.** The
+    repository root `.gitignore` is a Python template containing a bare `lib/`,
+    which matches at any depth. It was excluding the whole `src/lib` directory
+    from git — and from Tailwind's class scanner, which reads `.gitignore` too,
+    so `bg-slate-500` and `bg-amber-600` were never generated and two of the
+    five status colours rendered invisible. The negation lives in
+    `frontend/.gitignore` with the reason next to it; do not tidy it away.
+
+43. **The local fixture server is a development harness, not product data.**
+    `scripts/dev_fixture_api.py` serves the real routers over an in-memory store
+    so the UI can be built and reviewed without cloud credentials or Gemini
+    spend. Its documents are fixtures, but every `OpportunityMatch` in it is
+    produced by the real `opportunity_matcher.build_match` — no `match_status`,
+    `reason_code` or capability mapping is hand-written — so a UI built against
+    it is built against the real reconciliation matrix. It is never imported by
+    `app/`, is not deployed (the Dockerfile copies only `./app`), and must never
+    be pointed at a real environment.

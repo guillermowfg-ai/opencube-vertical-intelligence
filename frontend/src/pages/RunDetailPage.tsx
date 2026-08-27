@@ -39,7 +39,12 @@ type Tab = "businesses" | "opportunities";
 
 export function RunDetailPage() {
   const { runId = "" } = useParams();
-  const [tab, setTab] = useState<Tab>("businesses");
+  const [search] = useSearchParams();
+  // A link that carries a match-status filter is asking for the opportunities
+  // tab; landing on Businesses would silently drop the filter.
+  const [tab, setTab] = useState<Tab>(
+    search.get("status") ? "opportunities" : "businesses",
+  );
 
   const run = useResource((signal) => api.run(runId, signal), [runId], {
     pollMs: 15_000,
@@ -201,7 +206,11 @@ export function RunDetailPage() {
                 aggregateHypothesisCounts(businesses.data.businesses),
                 "hypothesis",
               )}
-              emptyMessage="No hypotheses yet — investigations are still running."
+              emptyMessage={
+                live
+                  ? "No hypotheses yet — investigations are still running."
+                  : "This run finished without forming any hypothesis."
+              }
             />
           ) : (
             <SkeletonRows rows={4} />
@@ -217,7 +226,11 @@ export function RunDetailPage() {
                 matches_not_matched: count(matches.data.matches, "NOT_MATCHED"),
                 matches_unresolved: count(matches.data.matches, "UNRESOLVED"),
               })}
-              emptyMessage="This run has not reached the matching phase yet."
+              emptyMessage={
+                live
+                  ? "This run has not reached the matching phase yet."
+                  : "This run had no hypothesis to reconcile, so nothing was matched."
+              }
             />
           ) : (
             <SkeletonRows rows={3} />

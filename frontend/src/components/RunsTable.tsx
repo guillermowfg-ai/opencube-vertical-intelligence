@@ -47,12 +47,20 @@ export function RunsTable({
         if (total === 0) {
           return <span className="text-xs text-ink-muted">Awaiting discovery</span>;
         }
+        // Blue while work is still moving, amber once something failed, teal
+        // only when every investigation settled cleanly.
+        const tone =
+          run.investigations_failed > 0
+            ? "caution"
+            : done === total
+              ? "positive"
+              : "info";
         return (
           <div className="w-40">
             <ProgressBar
               value={done}
               max={total}
-              tone={run.investigations_failed > 0 ? "caution" : "info"}
+              tone={tone}
               label={
                 <>
                   <span className="numerals font-medium text-ink">
@@ -121,11 +129,7 @@ export function RunsTable({
       numeric: true,
       render: (run) => (
         <span className="text-ink-soft">
-          {run.completed_at
-            ? formatDuration(run.started_at ?? run.created_at, run.completed_at)
-            : isRunLive(run.status)
-              ? "—"
-              : "—"}
+          {formatDuration(run.started_at ?? run.created_at, run.completed_at)}
         </span>
       ),
     },
