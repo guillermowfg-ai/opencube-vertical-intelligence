@@ -195,7 +195,12 @@ for _name in dir(MemoryStore):
 # Fixture corpus
 # ---------------------------------------------------------------------------
 
-BASE = datetime.datetime(2026, 8, 24, 14, 0, tzinfo=datetime.UTC)
+# Anchored to "three days ago" at import time rather than to a fixed calendar
+# date, so the relative timestamps the UI renders ("2 days ago", "18 minutes
+# ago") stay sensible however long after writing this the server is started.
+BASE = datetime.datetime.now(datetime.UTC).replace(
+    minute=0, second=0, microsecond=0
+) - datetime.timedelta(days=3)
 
 
 def ts(minutes: int) -> str:
@@ -538,8 +543,8 @@ def _seed_in_flight_run() -> None:
     STORE.save_run(
         Run(
             run_id=run_id,
-            created_at=ts(4320),
-            started_at=ts(4320),
+            created_at=ts(3 * 24 * 60 - 35),
+            started_at=ts(3 * 24 * 60 - 35),
             status=RunStatus.INVESTIGATING,
             vertical=VERTICAL,
             geography=GEOGRAPHY,
@@ -561,8 +566,12 @@ def _seed_in_flight_run() -> None:
                 investigation_id=f"{run_id}__{bid}",
                 run_id=run_id,
                 business_id=bid,
-                created_at=ts(4322),
-                completed_at=ts(4331) if status_ is InvestigationStatus.COMPLETED else None,
+                created_at=ts(3 * 24 * 60 - 33),
+                completed_at=(
+                    ts(3 * 24 * 60 - 24)
+                    if status_ is InvestigationStatus.COMPLETED
+                    else None
+                ),
                 status=status_,
                 source_count=2 if status_ is InvestigationStatus.COMPLETED else 0,
                 evidence_count=3 if status_ is InvestigationStatus.COMPLETED else 0,

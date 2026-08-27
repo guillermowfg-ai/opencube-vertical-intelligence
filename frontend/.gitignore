@@ -1,0 +1,11 @@
+node_modules
+dist
+.env.local
+*.local
+
+# The repository root .gitignore is a Python template and contains a bare
+# `lib/`, which matches at any depth and therefore swallows `src/lib/` — both
+# from git and from Tailwind's class scanner, which reads .gitignore too. That
+# is how `bg-slate-500` and `bg-amber-600` silently stopped being generated.
+# A deeper .gitignore wins, so re-include the directory explicitly.
+!src/lib/
