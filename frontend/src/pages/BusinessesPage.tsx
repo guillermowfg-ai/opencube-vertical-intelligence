@@ -14,7 +14,6 @@ import type { BusinessAggregate } from "../lib/types";
 import { DataTable, PrimaryCell, type Column } from "../components/ui/DataTable";
 import { ExternalLink, Card, PageHeader } from "../components/ui/primitives";
 import { EmptyState, ErrorState, SkeletonRows } from "../components/ui/states";
-import { Link } from "react-router-dom";
 
 export function BusinessesPage() {
   const { data, error, loading, reload } = useResource((signal) => api.businesses(signal), []);
@@ -22,6 +21,9 @@ export function BusinessesPage() {
   const columns: Column<BusinessAggregate>[] = [
     {
       key: "business",
+      // Capped: real business names and full postal addresses are long enough
+      // to push the right-hand columns behind an inner scrollbar.
+      className: "max-w-[300px]",
       header: "Business",
       render: (row) => (
         <PrimaryCell title={row.display_name} subtitle={row.formatted_address ?? undefined} />
@@ -42,14 +44,15 @@ export function BusinessesPage() {
           </span>
         ),
     },
-    { key: "runs", header: "Runs", numeric: true, render: (row) => row.runs_total },
     {
-      key: "investigations",
-      header: "Investigations",
+      key: "runs",
+      header: "Runs",
       numeric: true,
       render: (row) => (
-        <span title={`${row.investigations_completed} completed`}>
-          {row.investigations_total}
+        <span
+          title={`${row.investigations_total} investigations, ${row.investigations_completed} completed`}
+        >
+          {row.runs_total}
         </span>
       ),
     },
@@ -88,22 +91,6 @@ export function BusinessesPage() {
         </span>
       ),
     },
-    {
-      key: "run",
-      header: "Latest run",
-      render: (row) =>
-        row.latest_run_id ? (
-          <Link
-            to={`/runs/${encodeURIComponent(row.latest_run_id)}`}
-            className="font-mono text-xs text-brand-600 transition hover:text-brand-700"
-            onClick={(event) => event.stopPropagation()}
-          >
-            Open
-          </Link>
-        ) : (
-          <span className="text-xs text-ink-muted">—</span>
-        ),
-    },
   ];
 
   return (
@@ -132,6 +119,13 @@ export function BusinessesPage() {
             columns={columns}
             rows={data.businesses}
             rowKey={(row) => row.business_id}
+            // The row itself opens the most recent run this business appeared
+            // in, which is what the dropped "Latest run" column linked to.
+            rowHref={(row) =>
+              row.latest_run_id
+                ? `/runs/${encodeURIComponent(row.latest_run_id)}`
+                : "/businesses"
+            }
             empty={
               <EmptyState
                 title="No businesses yet"

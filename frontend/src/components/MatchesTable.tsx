@@ -15,7 +15,6 @@ import {
   reasonCodeLabel,
   verificationStateOf,
 } from "../lib/domain";
-import { formatRelative } from "../lib/format";
 import type { MatchRow } from "../lib/types";
 import { DataTable, PrimaryCell, type Column } from "./ui/DataTable";
 import { Chip, StatusBadge } from "./ui/StatusBadge";
@@ -33,6 +32,7 @@ export function MatchesTable({
     {
       key: "business",
       header: "Business",
+      className: "max-w-[240px]",
       render: (match) => (
         <PrimaryCell
           title={match.business_display_name ?? match.business_id}
@@ -47,6 +47,7 @@ export function MatchesTable({
           {
             key: "opportunity",
             header: "Opportunity",
+            className: "max-w-[170px]",
             render: (match: MatchRow) => (
               <span className="text-ink">
                 {match.opportunity_name ?? match.opportunity_id}
@@ -80,7 +81,7 @@ export function MatchesTable({
           // Truncated to one line: a wrapping chip triples the row height and
           // this column is taxonomy, not the row's point.
           <Chip
-            className="max-w-[170px]"
+            className="max-w-[140px]"
             title={`${match.primary_capability_label} — taxonomy only; capability fit is never evidence of need.`}
           >
             <span className="truncate">{match.primary_capability_label}</span>
@@ -92,19 +93,10 @@ export function MatchesTable({
     {
       key: "reason",
       header: "Reason",
-      className: "max-w-[210px] min-w-[140px]",
+      className: "max-w-[150px] min-w-[110px]",
       render: (match) => (
         <span className="block truncate text-xs text-ink-muted" title={match.reasoning}>
           {reasonCodeLabel(match.reason_code)}
-        </span>
-      ),
-    },
-    {
-      key: "created",
-      header: "Decided",
-      render: (match) => (
-        <span className="whitespace-nowrap text-xs text-ink-muted">
-          {formatRelative(match.created_at)}
         </span>
       ),
     },

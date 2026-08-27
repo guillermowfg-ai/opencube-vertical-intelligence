@@ -380,6 +380,7 @@ def get_overview(
                 if i.get("status") == InvestigationStatus.COMPLETED.value
             }
         ),
+        # Investigator evidence only, by construction — see OverviewKpis.
         evidence_total=sum(int(i.get("evidence_count") or 0) for i in corpus.investigations),
         hypotheses_total=len(corpus.hypotheses),
         verifications_completed=sum(

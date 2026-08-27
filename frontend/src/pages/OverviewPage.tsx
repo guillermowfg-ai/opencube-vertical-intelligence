@@ -10,7 +10,7 @@ import { Link } from "react-router-dom";
 import { api, useResource } from "../lib/api";
 import { MATCH_STATUS, RUN_STATUS, isRunLive } from "../lib/domain";
 import { toSegments } from "../lib/segments";
-import { formatDateTime, formatRelative, pluralize } from "../lib/format";
+import { formatDateTime, formatRelative, pluralize, shortId } from "../lib/format";
 import type { RunSummary } from "../lib/types";
 import { RunsTable } from "../components/RunsTable";
 import { StatusBadge } from "../components/ui/StatusBadge";
@@ -88,7 +88,7 @@ export function OverviewPage() {
           <StatCard
             label="Investigated"
             value={kpis.businesses_investigated}
-            hint={`${kpis.evidence_total} evidence ${pluralize(kpis.evidence_total, "record")}`}
+            hint={`${kpis.evidence_total} investigator evidence ${pluralize(kpis.evidence_total, "record")}`}
           />
           <StatCard
             label="Verifications"
@@ -188,11 +188,16 @@ export function OverviewPage() {
                       <p className="mt-0.5 truncate text-sm text-ink-soft">
                         {match.opportunity_name ?? match.opportunity_id}
                       </p>
-                      {match.primary_capability_label ? (
-                        <p className="mt-1.5 truncate text-xs text-ink-muted">
-                          {match.primary_capability_label}
-                        </p>
-                      ) : null}
+                      <p className="mt-1.5 truncate text-xs text-ink-muted">
+                        {match.primary_capability_label ? (
+                          <>{match.primary_capability_label} · </>
+                        ) : null}
+                        {/* The run is what separates two otherwise identical
+                            rows: the same business can match the same
+                            opportunity in several runs, for different
+                            reasons. */}
+                        <span className="font-mono">run {shortId(match.run_id, 8)}</span>
+                      </p>
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-1.5">
                       <StatusBadge meta={MATCH_STATUS[match.match_status]} />
@@ -311,9 +316,17 @@ function LiveRunBanner({ run }: { run: RunSummary }) {
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <StatusBadge meta={RUN_STATUS[run.status]} live />
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-ink">{run.run_id}</p>
+          <p className="truncate font-mono text-sm font-medium text-ink">{run.run_id}</p>
           <p className="truncate text-xs text-ink-soft">
-            {run.vertical} · {run.geography}
+            {run.vertical} · {run.geography} ·{" "}
+            {/* The age is the point, not decoration: a run the backend still
+                reports as non-terminal may have been sitting that way for
+                days. Showing when it started lets an operator see that
+                without the interface inventing a "stalled" status the
+                pipeline never wrote. */}
+            <span title={formatDateTime(run.created_at)}>
+              started {formatRelative(run.created_at)}
+            </span>
           </p>
         </div>
       </div>

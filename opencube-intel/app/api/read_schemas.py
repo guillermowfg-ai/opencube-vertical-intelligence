@@ -84,6 +84,12 @@ class OverviewKpis(BaseModel):
     runs_active: int
     businesses_discovered: int
     businesses_investigated: int
+    # Investigator evidence only — the sum of `Investigation.evidence_count`.
+    # Verification Loop evidence shares the same canonical collection
+    # (DECISIONS.md #14) and is deliberately NOT folded in here: the two have
+    # different provenance, and counting them together would be the exact
+    # conflation that decision forbids. Counting all evidence would also make
+    # this route scale with the fastest-growing collection in the system.
     evidence_total: int
     hypotheses_total: int
     verifications_completed: int
