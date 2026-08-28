@@ -31,6 +31,7 @@ returning a partial picture.
 from __future__ import annotations
 
 import collections
+import dataclasses
 import datetime
 
 from fastapi import APIRouter, HTTPException, Query, status
@@ -295,27 +296,58 @@ class _Corpus:
             failed_investigation_count=run.get("failed_investigation_count"),
         )
 
-    def terminal_run_ids(self) -> set[str]:
-        """Runs whose analysis actually finished, COMPLETED or FAILED.
+    def reconciled(self) -> _Reconciled:
+        """The canonical completed-result population: work that reached a
+        decision.
 
-        A FAILED run is included on purpose: DECISIONS.md #30 -- one failed
-        business does not throw away the nine that succeeded, and that run's
-        verifications and matches are real output. What is excluded is a run
-        that never reached a terminal state, whose partial records describe
-        work still in flight (or, for a pre-async run, work no worker was ever
-        asked to finish).
+        Scoping by terminal Run status is not enough, and the difference is not
+        hypothetical. A run can be terminal and still carry hypotheses that
+        never reached Verification or the Matcher -- a legacy local run, or one
+        that failed before finalisation. Marking such a run FAILED would then
+        silently re-admit its unreconciled hypotheses into the result totals,
+        inflating the denominator with work that never produced an answer.
+
+        So the population is defined by the Matcher's own output instead.
+        `match_id == hypothesis_id` (DECISIONS.md #18), and every hypothesis the
+        Matcher saw produces exactly one OpportunityMatch, so the set of
+        persisted matches *is* the set of reconciled opportunities. A FAILED run
+        that produced matches stays fully represented (DECISIONS.md #30); a run
+        of any status that produced none contributes nothing.
         """
-        return {
-            r.get("run_id", "")
-            for r in self.runs
-            if r.get("status") in _TERMINAL_RUN_VALUES
-        }
+        matches = self.matches
+        return _Reconciled(
+            matches=matches,
+            hypothesis_ids={m.get("hypothesis_id") for m in matches},
+            investigation_ids={m.get("investigation_id") for m in matches},
+            business_ids={m.get("business_id") for m in matches},
+            run_ids={m.get("run_id") for m in matches},
+        )
 
     def sorted_runs(self) -> list[dict]:
         """Newest first. `created_at` is an application-written ISO-8601
         string, so lexicographic order is chronological order and no
         Firestore composite index is required."""
         return sorted(self.runs, key=lambda r: r.get("created_at") or "", reverse=True)
+
+
+@dataclasses.dataclass(frozen=True)
+class _Reconciled:
+    """One denominator for every completed-result metric on the dashboard.
+
+    Anything that says "out of", "across", or renders a percentage against the
+    population of evaluated opportunities must derive it from here, so the
+    dashboard cannot disagree with itself.
+    """
+
+    matches: list[dict]
+    hypothesis_ids: set[str | None]
+    investigation_ids: set[str | None]
+    business_ids: set[str | None]
+    run_ids: set[str | None]
+
+    @property
+    def total(self) -> int:
+        return len(self.matches)
 
 
 def _group(rows: list[dict], key: str) -> dict[str, list[dict]]:
@@ -351,18 +383,26 @@ def get_overview(
     corpus = _Corpus()
     runs = corpus.sorted_runs()
 
-    # Every analytical aggregate below describes finished analysis, so it is
-    # scoped to terminal runs. A run still in flight -- or one abandoned before
-    # the asynchronous path existed -- keeps its place in task history with its
-    # honest status, but its partial records must not be counted as results.
-    # `active_runs_excluded` reports how many were left out so the UI can say so.
-    terminal = corpus.terminal_run_ids()
-    in_scope = lambda row: row.get("run_id") in terminal  # noqa: E731
+    # Every completed-result aggregate below is scoped to the same canonical
+    # population -- work that actually reached a decision -- so no two numbers
+    # on the dashboard can be computed against different denominators. A task
+    # that produced no decisions keeps its place in history with its honest
+    # status; `runs_without_results` reports how many, so the exclusion is
+    # stated rather than hidden.
+    reconciled = corpus.reconciled()
+    matches = reconciled.matches
 
-    investigations = [i for i in corpus.investigations if in_scope(i)]
-    hypotheses = [h for h in corpus.hypotheses if in_scope(h)]
-    verifications = [v for v in corpus.verifications if in_scope(v)]
-    matches = [m for m in corpus.matches if in_scope(m)]
+    hypotheses = [
+        h for h in corpus.hypotheses if h.get("hypothesis_id") in reconciled.hypothesis_ids
+    ]
+    verifications = [
+        v for v in corpus.verifications if v.get("hypothesis_id") in reconciled.hypothesis_ids
+    ]
+    investigations = [
+        i
+        for i in corpus.investigations
+        if i.get("investigation_id") in reconciled.investigation_ids
+    ]
 
     hypothesis_tally = collections.Counter(
         h.get("status") for h in hypotheses if h.get("status")
@@ -451,7 +491,7 @@ def get_overview(
             )
             for opportunity_id, count in opportunity_tally.most_common()
         ],
-        active_runs_excluded=len(corpus.runs) - len(terminal),
+        runs_without_results=len(corpus.runs) - len(reconciled.run_ids),
         recent_runs=[corpus.run_summary(r) for r in runs[:recent_runs]],
         highlighted_matches=[
             _match_row(m, businesses.get(m.get("business_id", ""))) for m in highlighted

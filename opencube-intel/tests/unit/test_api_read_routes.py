@@ -183,10 +183,13 @@ def test_overview_verification_state_reuses_the_matcher_classification(
     )
     hypothesis = make_hypothesis("hyp-1", "biz-a")
     store.save_hypothesis(hypothesis)
-    store.save_verification(
-        make_verification(
-            "ver-1", hypothesis, execution_status=VerificationExecutionStatus.FAILED, outcome=None
-        )
+    verification = make_verification(
+        "ver-1", hypothesis, execution_status=VerificationExecutionStatus.FAILED, outcome=None
+    )
+    store.save_verification(verification)
+    # The hypothesis must be reconciled to count as a completed result at all.
+    store.save_opportunity_match(
+        opportunity_matcher.build_match(hypothesis, verification)
     )
 
     calls: list[str] = []
@@ -201,6 +204,76 @@ def test_overview_verification_state_reuses_the_matcher_classification(
 
     assert calls == ["ver-1"]
     assert {c["key"]: c["count"] for c in body["verification_state_counts"]}["FAILED"] == 1
+
+
+def test_a_terminal_run_with_no_matches_never_enters_the_result_totals(
+    client, seeded, store
+):
+    """The exact shape of the legacy run 01cbfec1 once it is marked FAILED.
+
+    Terminal status alone must not readmit hypotheses that never reached the
+    Matcher; if it did, honestly recording an abandoned run as FAILED would
+    silently inflate the denominator with work that produced no answer.
+    """
+    legacy = seed_run_with_investigations(
+        store,
+        ["biz-legacy"],
+        status=InvestigationStatus.COMPLETED,
+        run_status=RunStatus.FAILED,
+        run_id="run-legacy",
+    )
+    for index in range(3):
+        store.save_hypothesis(
+            make_hypothesis(
+                f"hyp-legacy-{index}",
+                "biz-legacy",
+                status=OpportunityStatus.CONTRADICTED,
+                run_id=legacy.run_id,
+            )
+        )
+    # ... and no matches at all, exactly like the legacy run.
+
+    body = client.get("/overview").json()
+
+    assert body["kpis"]["hypotheses_total"] == 3, "the legacy 3 must stay out"
+    assert body["kpis"]["matches_total"] == 3
+    assert {c["key"]: c["count"] for c in body["hypothesis_status_counts"]}[
+        "CONTRADICTED"
+    ] == 1
+    assert body["runs_without_results"] == 1
+    # Still visible in history, with its real status.
+    assert "run-legacy" in {r["run_id"] for r in body["recent_runs"]}
+
+
+def test_every_completed_result_metric_shares_one_denominator(client, seeded, store):
+    """No two numbers on the dashboard may be computed against different
+    populations of evaluated opportunities."""
+    legacy = seed_run_with_investigations(
+        store,
+        ["biz-legacy"],
+        status=InvestigationStatus.COMPLETED,
+        run_status=RunStatus.FAILED,
+        run_id="run-legacy",
+    )
+    for index in range(3):
+        store.save_hypothesis(
+            make_hypothesis(f"hyp-legacy-{index}", "biz-legacy", run_id=legacy.run_id)
+        )
+
+    body = client.get("/overview").json()
+    denominator = body["kpis"]["matches_total"]
+
+    assert body["kpis"]["hypotheses_total"] == denominator
+    assert sum(c["count"] for c in body["match_status_counts"]) == denominator
+    assert sum(c["count"] for c in body["hypothesis_status_counts"]) == denominator
+    assert sum(c["count"] for c in body["opportunity_counts"]) == denominator
+    assert (
+        body["kpis"]["matches_matched"] + body["kpis"]["review_needed"]
+        <= denominator
+    )
+    # A verification only exists for a reconciled hypothesis, so its own
+    # population can be smaller -- but never larger than the denominator.
+    assert sum(c["count"] for c in body["verification_state_counts"]) <= denominator
 
 
 def test_overview_counts_only_runs_whose_analysis_finished(client, seeded, store):
@@ -230,7 +303,7 @@ def test_overview_counts_only_runs_whose_analysis_finished(client, seeded, store
     # The seeded terminal run's numbers are untouched by the stranded one.
     assert body["kpis"]["hypotheses_total"] == 3
     assert body["kpis"]["businesses_discovered"] == 2
-    assert body["active_runs_excluded"] == 1
+    assert body["runs_without_results"] == 1
 
     hypothesis = {c["key"]: c["count"] for c in body["hypothesis_status_counts"]}
     assert hypothesis["CONTRADICTED"] == 1, "the stranded run's 3 must not be counted"
@@ -261,7 +334,7 @@ def test_overview_still_counts_a_failed_run_that_produced_results(client, store,
 
     assert body["kpis"]["hypotheses_total"] == 4
     assert body["kpis"]["matches_total"] == 4
-    assert body["active_runs_excluded"] == 0
+    assert body["runs_without_results"] == 0
 
 
 def test_overview_handles_an_empty_platform(client, store):

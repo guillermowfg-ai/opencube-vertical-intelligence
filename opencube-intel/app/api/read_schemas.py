@@ -108,10 +108,11 @@ class OverviewResponse(BaseModel):
     opportunity_counts: list[LabelledCount]
     recent_runs: list[RunSummaryView]
     highlighted_matches: list[MatchRowView]
-    # How many runs were left out of every aggregate above because they never
-    # reached a terminal state. Reported rather than hidden: a dashboard that
+    # How many runs contributed nothing to the aggregates above because they
+    # produced no reconciled result -- still running, or finished without ever
+    # reaching the Matcher. Reported rather than hidden: a dashboard that
     # silently drops records is as misleading as one that miscounts them.
-    active_runs_excluded: int
+    runs_without_results: int
     truncated: bool
 
 

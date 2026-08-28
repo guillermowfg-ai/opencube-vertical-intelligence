@@ -172,6 +172,17 @@ describe("the decision chain is readable in order", () => {
 describe("stale runs cannot contaminate results", () => {
   it("asks the back end for the exclusion count rather than filtering client-side", () => {
     const types = FILES.find((f) => f.path.endsWith("lib/types.ts"))!.text;
-    expect(types).toContain("active_runs_excluded");
+    expect(types).toContain("runs_without_results");
+  });
+
+  it("never recomputes a completed-result denominator from its own arithmetic", () => {
+    // Every "out of" on the dashboard must come from the back end's single
+    // reconciled population, not from a client-side sum over some other list.
+    const command = FILES.find((f) => f.path.endsWith("CommandCenterPage.tsx"))!.text;
+    expect(command).toContain("data.match_status_counts.reduce");
+    // The rejected count is read from the same array the donut renders.
+    expect(command).toContain('c.key === "NOT_MATCHED"');
+    // and never from the hypothesis corpus.
+    expect(command).not.toContain("hypothesis_status_counts.reduce");
   });
 });

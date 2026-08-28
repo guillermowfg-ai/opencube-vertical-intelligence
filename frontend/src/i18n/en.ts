@@ -273,9 +273,9 @@ export const en = {
     snapshotEyebrow: "Context",
     snapshotTitle: "Everything so far",
     snapshotExcluded:
-      "{count} unfinished task is not counted here — its work never completed.",
+      "{count} task produced no results, so it is not counted here.",
     snapshotExcludedPlural:
-      "{count} unfinished tasks are not counted here — their work never completed.",
+      "{count} tasks produced no results, so they are not counted here.",
     snapshotSubtitle:
       "Totals across every task in this market. Each number comes from something we actually saw and saved.",
   },
@@ -480,6 +480,7 @@ export const en = {
     card: {
       teamMembers: "{count} on the team",
       businesses: "{count} businesses",
+      businessesOne: "1 business",
       completedIn: "Done in {duration}",
       running: "Running now",
       goodFit: "{count} worth exploring",

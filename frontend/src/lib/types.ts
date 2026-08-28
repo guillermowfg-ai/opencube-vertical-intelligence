@@ -191,8 +191,9 @@ export interface OverviewResponse {
   opportunity_counts: LabelledCount[];
   recent_runs: RunSummary[];
   highlighted_matches: MatchRow[];
-  /** Runs left out of every aggregate above because they never finished. */
-  active_runs_excluded: number;
+  /** Runs that contributed nothing above because they produced no reconciled
+   * result — still running, or finished without ever reaching a decision. */
+  runs_without_results: number;
   truncated: boolean;
 }
 

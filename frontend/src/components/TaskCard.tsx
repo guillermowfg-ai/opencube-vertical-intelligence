@@ -48,7 +48,11 @@ export function TaskCard({ run }: { run: RunSummary }) {
 
       <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs text-ink-muted">
         <span>{fill(copy.teamMembers, { count: TEAM.length })}</span>
-        {total > 0 ? <span>{fill(copy.businesses, { count: total })}</span> : null}
+        {total > 0 ? (
+          <span>
+            {total === 1 ? copy.businessesOne : fill(copy.businesses, { count: total })}
+          </span>
+        ) : null}
         <span>{formatRelative(locale, run.created_at)}</span>
         <span>
           {run.completed_at

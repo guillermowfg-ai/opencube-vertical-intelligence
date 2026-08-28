@@ -259,9 +259,9 @@ export const es: Dictionary = {
     snapshotEyebrow: "Contexto",
     snapshotTitle: "Todo hasta ahora",
     snapshotExcluded:
-      "{count} tarea sin terminar no se cuenta aquí: su trabajo nunca se completó.",
+      "{count} tarea no produjo resultados, así que no se cuenta aquí.",
     snapshotExcludedPlural:
-      "{count} tareas sin terminar no se cuentan aquí: su trabajo nunca se completó.",
+      "{count} tareas no produjeron resultados, así que no se cuentan aquí.",
     snapshotSubtitle:
       "Totales de todas las tareas de este mercado. Cada número viene de algo que realmente vimos y guardamos.",
   },
@@ -466,6 +466,7 @@ export const es: Dictionary = {
     card: {
       teamMembers: "{count} en el equipo",
       businesses: "{count} negocios",
+      businessesOne: "1 negocio",
       completedIn: "Listo en {duration}",
       running: "En curso ahora",
       goodFit: "{count} vale la pena explorar",

@@ -124,12 +124,12 @@ export function CommandCenterPage() {
         eyebrow={t.commandCenter.snapshotEyebrow}
         title={t.commandCenter.snapshotTitle}
         description={
-          data.active_runs_excluded > 0
+          data.runs_without_results > 0
             ? `${t.commandCenter.snapshotSubtitle} ${fill(
-                data.active_runs_excluded === 1
+                data.runs_without_results === 1
                   ? t.commandCenter.snapshotExcluded
                   : t.commandCenter.snapshotExcludedPlural,
-                { count: data.active_runs_excluded },
+                { count: data.runs_without_results },
               )}`
             : t.commandCenter.snapshotSubtitle
         }
