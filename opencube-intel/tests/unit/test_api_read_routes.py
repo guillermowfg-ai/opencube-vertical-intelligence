@@ -8,6 +8,9 @@ pipeline did not persist.
 
 from __future__ import annotations
 
+import ast
+from pathlib import Path
+
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -19,7 +22,8 @@ from orchestration_factories import (
 )
 
 from app.api.read_routes import router as read_router
-from app.investigator import opportunity_matcher
+from app.investigator import market_scout, opportunity_matcher
+from app.investigator import run_orchestrator as orchestrator
 from app.investigator.models import (
     Evidence,
     InvestigationStatus,
@@ -350,6 +354,42 @@ def test_catalog_serves_the_declarative_vocabularies(client, store):
     assert len(body["evaluated_opportunity_ids"]) == 3
     assert "online_booking_friction" in body["evaluated_opportunity_ids"]
     assert any(c["capability_id"] == "crm" for c in body["capabilities"])
+
+
+def test_catalog_publishes_what_post_runs_actually_accepts(client, store):
+    """The UI must never render a control the API would reject, so the frozen
+    parameters are published rather than reimplemented in the frontend."""
+    execution = client.get("/catalog").json()["execution"]
+
+    assert execution["vertical"] == market_scout.VERTICAL
+    assert execution["geography"] == market_scout.GEOGRAPHY
+    assert execution["vertical_locked"] is True
+    assert execution["geography_locked"] is True
+
+    # There is no target_business_count field on CreateRunRequest at all.
+    assert execution["target_business_count"] == market_scout.DEFAULT_TARGET_COUNT
+    assert execution["target_business_count_locked"] is True
+
+    assert execution["provider_capabilities_editable"] is True
+    assert execution["provider_capabilities_max"] == 20
+
+
+def test_catalog_reports_that_capabilities_do_not_steer_the_analysis(client, store):
+    """`provider_capabilities` is persisted on the Run and returned by
+    GET /runs/{id}, but no analytical engine reads it. The flag exists so the
+    UI labels it as recorded scope instead of implying it changes the work."""
+    body = client.get("/catalog").json()
+    assert body["execution"]["provider_capabilities_affect_analysis"] is False
+
+    source = Path(orchestrator.__file__).read_text()
+    tree = ast.parse(source)
+    readers = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Attribute) and node.attr == "provider_capabilities"
+    ]
+    # Only create_run touches it, and only to write it onto the Run.
+    assert len(readers) == 0, "run_orchestrator must not read provider_capabilities"
 
 
 # ---------------------------------------------------------------------------

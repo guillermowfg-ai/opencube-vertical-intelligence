@@ -320,6 +320,35 @@ class BusinessListResponse(BaseModel):
     truncated: bool
 
 
+class ExecutionParameters(BaseModel):
+    """Exactly what `POST /runs` accepts, published so the UI never has to
+    guess and never renders a control the API would reject.
+
+    Market Scout V1 is frozen to one vertical and one geography — a mismatch
+    is a 422, not a best-effort run — and there is deliberately no
+    `target_business_count` field at all: the ~10-business scale is a cost
+    guardrail, not a client-tunable parameter (`CreateRunRequest`).
+
+    `provider_capabilities` is the one value a caller can genuinely set. It is
+    persisted on the Run and returned by `GET /runs/{id}`, but no analytical
+    engine reads it: `grep provider_capabilities app/` reaches only
+    `run_orchestrator.create_run` and the `Run` model. It records which
+    OpenCube services a task was run on behalf of; it does not change what is
+    analysed. `provider_capabilities_affect_analysis` says so, so the UI can
+    label it honestly instead of implying it steers the work.
+    """
+
+    vertical: str
+    vertical_locked: bool
+    geography: str
+    geography_locked: bool
+    target_business_count: int
+    target_business_count_locked: bool
+    provider_capabilities_editable: bool
+    provider_capabilities_max: int
+    provider_capabilities_affect_analysis: bool
+
+
 class CatalogResponse(BaseModel):
     """The two declarative catalogs, served so the UI renders the same
     vocabulary the pipeline reasons over instead of hardcoding its own."""
@@ -327,6 +356,7 @@ class CatalogResponse(BaseModel):
     vertical: str
     geography: str
     default_provider_capabilities: list[str]
+    execution: ExecutionParameters
     evaluated_opportunity_ids: list[str]
     opportunities: list[OpportunityDefinitionView]
     capabilities: list[CapabilityView]

@@ -44,6 +44,7 @@ from app.api.read_schemas import (
     CapabilityView,
     CatalogResponse,
     EvidenceView,
+    ExecutionParameters,
     HypothesisView,
     LabelledCount,
     MatchDetailResponse,
@@ -746,6 +747,18 @@ def get_catalog() -> CatalogResponse:
         vertical=market_scout.VERTICAL,
         geography=market_scout.GEOGRAPHY,
         default_provider_capabilities=list(market_scout.DEFAULT_PROVIDER_CAPABILITIES),
+        execution=ExecutionParameters(
+            vertical=market_scout.VERTICAL,
+            vertical_locked=True,
+            geography=market_scout.GEOGRAPHY,
+            geography_locked=True,
+            target_business_count=market_scout.DEFAULT_TARGET_COUNT,
+            # Not a field on CreateRunRequest at all -- see ExecutionParameters.
+            target_business_count_locked=True,
+            provider_capabilities_editable=True,
+            provider_capabilities_max=20,
+            provider_capabilities_affect_analysis=False,
+        ),
         evaluated_opportunity_ids=sorted(catalog.EVALUATED_OPPORTUNITY_IDS),
         opportunities=[
             view

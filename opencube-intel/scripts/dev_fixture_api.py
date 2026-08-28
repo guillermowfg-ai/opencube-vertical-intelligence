@@ -8,6 +8,10 @@ single Gemini call.
 What is fixed and what is real:
 
   * Persistence is fake — an in-memory dict, not Firestore.
+  * Cloud Tasks is stubbed. `POST /runs` here enqueues nothing, spends
+    nothing, and calls no model: a background thread walks the new Run
+    through the same statuses the real orchestrator writes, so the live task
+    view can be exercised without a paid run.
   * The documents are fixtures — they describe businesses that do not exist.
   * Everything else is the product. The routers are the deployed routers,
     the models are the frozen models, and every `OpportunityMatch` below is
@@ -26,6 +30,8 @@ from __future__ import annotations
 
 import datetime
 import sys
+import threading
+import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -33,7 +39,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.investigator import firestore_store, opportunity_matcher
+from app.investigator import firestore_store, opportunity_matcher, tasks_client
 from app.investigator.models import (
     Business,
     Evidence,
@@ -189,6 +195,103 @@ STORE = MemoryStore()
 for _name in dir(MemoryStore):
     if not _name.startswith("_") and hasattr(firestore_store, _name):
         setattr(firestore_store, _name, getattr(STORE, _name))
+
+
+# ---------------------------------------------------------------------------
+# Stubbed Cloud Tasks
+#
+# The real `enqueue` would create a Cloud Task against the live queue, which
+# would then drive real Places and Gemini calls. Here it records the request
+# and starts a local simulation instead, so the launch -> live activity ->
+# results path is exercisable end to end at zero cost and with no infra.
+# ---------------------------------------------------------------------------
+
+ENQUEUED: list[dict] = []
+
+
+def _fake_enqueue(*, route: str, payload: dict, name: str, dispatch_deadline_s: int) -> bool:
+    ENQUEUED.append({"route": route, "payload": payload, "name": name})
+    if route.endswith("/scout"):
+        threading.Thread(
+            target=_simulate_run, args=(payload["run_id"],), daemon=True
+        ).start()
+    return True
+
+
+tasks_client.enqueue = _fake_enqueue
+
+
+def _simulate_run(run_id: str) -> None:
+    """Walk a new Run through the statuses the real orchestrator writes.
+
+    Deliberately shallow: it produces Businesses and Investigations so progress
+    is visible, then finalises with no hypotheses. It never fabricates
+    hypotheses, verifications or matches -- inventing analytical records, even
+    in a dev harness, is exactly the thing this project does not do.
+    """
+    def _load() -> Run:
+        return Run(**STORE.get_run(run_id))
+
+    time.sleep(1.5)
+    run = _load()
+    STORE.save_run(run.model_copy(update={"status": RunStatus.DISCOVERING}))
+
+    time.sleep(2.5)
+    business_ids = [b[0] for b in BUSINESSES[:4]]
+    for bid in business_ids:
+        STORE.save_investigation(
+            Investigation(
+                investigation_id=f"{run_id}__{bid}",
+                run_id=run_id,
+                business_id=bid,
+                created_at=_now(),
+                status=InvestigationStatus.IN_PROGRESS,
+            )
+        )
+    STORE.save_run(
+        _load().model_copy(
+            update={
+                "status": RunStatus.INVESTIGATING,
+                "businesses_total": len(business_ids),
+                "discovery_raw_candidate_count": 31,
+                "discovery_queries": ["med spa in Brickell, Miami, FL"],
+            }
+        )
+    )
+
+    for index, bid in enumerate(business_ids, start=1):
+        time.sleep(2.0)
+        STORE.save_investigation(
+            Investigation(
+                investigation_id=f"{run_id}__{bid}",
+                run_id=run_id,
+                business_id=bid,
+                created_at=_now(),
+                completed_at=_now(),
+                status=InvestigationStatus.COMPLETED,
+                source_count=2,
+                evidence_count=3,
+            )
+        )
+        if index == len(business_ids):
+            STORE.save_run(_load().model_copy(update={"status": RunStatus.FINALIZING}))
+
+    time.sleep(3.0)
+    STORE.save_run(
+        _load().model_copy(
+            update={
+                "status": RunStatus.COMPLETED,
+                "completed_at": _now(),
+                "investigation_count": len(business_ids),
+                "completed_investigation_count": len(business_ids),
+                "failed_investigation_count": 0,
+            }
+        )
+    )
+
+
+def _now() -> str:
+    return datetime.datetime.now(datetime.UTC).isoformat()
 
 
 # ---------------------------------------------------------------------------
