@@ -1,0 +1,205 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="950" viewBox="0 0 1200 950" role="img" aria-labelledby="t d">
+  <title id="t">OpenCube Intel — production architecture</title>
+  <desc id="d">Four layers. The user assigns a task in the OpenCube Intel frontend, which posts to a FastAPI product API on Cloud Run. Cloud Tasks dispatches background work to Market Scout, Business Investigator and the Verification Agent, which call Gemini on Vertex AI and the Places API. The Opportunity Matcher is a deterministic engine that makes no model call. Everything is persisted in Firestore, which the frontend polls, and a human approves any outreach.</desc>
+
+  <defs>
+    <style>
+      .ff { font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+      .band-label { font-size: 11px; font-weight: 700; letter-spacing: 1.4px; fill: #96897C; }
+      .box-title { font-size: 15px; font-weight: 650; fill: #1A1713; }
+      .box-kind { font-size: 11px; font-weight: 700; letter-spacing: .8px; fill: #96897C; }
+      .box-sub { font-size: 12px; fill: #5F5A54; }
+      .chip-text { font-size: 10.5px; font-weight: 650; letter-spacing: .4px; fill: #4A6FA5; }
+      .chip-text-brand { font-size: 10.5px; font-weight: 700; letter-spacing: .4px; fill: #C1520A; }
+      .edge-label { font-size: 11.5px; fill: #6B635B; }
+      .edge-label-b { font-size: 11.5px; font-weight: 650; fill: #4A423B; }
+      .title { font-size: 20px; font-weight: 700; fill: #1A1713; }
+      .subtitle { font-size: 12.5px; fill: #6B635B; }
+      .legend { font-size: 11.5px; fill: #6B635B; }
+      .fs-title { font-size: 15px; font-weight: 650; fill: #1A1713; }
+      .fs-cols { font-size: 13px; font-weight: 600; fill: #3D3831; }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#8A8178"/>
+    </marker>
+    <marker id="arrow-o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#E2600A"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="950" fill="#FFFFFF"/>
+
+  <!-- ── title ───────────────────────────────────────────────────────── -->
+  <text class="ff title" x="90" y="34">OpenCube Intel — production architecture</text>
+  <text class="ff subtitle" x="90" y="56">Cloud Run <tspan font-weight="600">opencube-intel-00002-mk2</tspan> · us-east1 · as executed for run 5fc062f1-3f5c-46ae-8f7f-9981ab11b669</text>
+
+  <!-- ── band A: user / product ──────────────────────────────────────── -->
+  <rect x="90" y="78" width="1070" height="140" rx="14" fill="#FAF8F6" stroke="#EAE4DC"/>
+  <text class="ff band-label" x="112" y="102">USER / PRODUCT</text>
+
+  <g>
+    <rect x="130" y="112" width="420" height="90" rx="10" fill="#FFFFFF" stroke="#DDD6CC"/>
+    <rect x="130" y="112" width="420" height="4" rx="2" fill="#E2600A"/>
+    <text class="ff box-title" x="150" y="140">OpenCube Intel — Frontend</text>
+    <text class="ff box-sub" x="150" y="160">React 19 · TypeScript · Vite · Tailwind v4 · EN / ES</text>
+    <text class="ff box-sub" x="150" y="180">Command Centre → New Task → Live activity → Evidence chain</text>
+  </g>
+
+  <g>
+    <rect x="720" y="112" width="420" height="90" rx="10" fill="#FFFFFF" stroke="#DDD6CC" stroke-dasharray="5 4"/>
+    <text class="ff box-title" x="740" y="140">Human Gate</text>
+    <text class="ff box-sub" x="740" y="160">A person approves before anyone is contacted.</text>
+    <text class="ff box-sub" x="740" y="180">The system never sends outreach itself.</text>
+  </g>
+
+  <!-- ── band B: google cloud ────────────────────────────────────────── -->
+  <rect x="90" y="252" width="1070" height="168" rx="14" fill="#FAF8F6" stroke="#EAE4DC"/>
+  <text class="ff band-label" x="112" y="276">GOOGLE CLOUD</text>
+
+  <g>
+    <rect x="130" y="288" width="240" height="114" rx="10" fill="#FFFFFF" stroke="#C7D4E8"/>
+    <text class="ff box-title" x="148" y="314">Cloud Run</text>
+    <text class="ff box-sub" x="148" y="334">opencube-intel · us-east1</text>
+    <text class="ff box-sub" x="148" y="352">FastAPI product API</text>
+    <text class="ff box-sub" x="148" y="370">on Google ADK</text>
+    <text class="ff box-kind" x="148" y="390">PRIVATE — NO allUsers</text>
+  </g>
+
+  <g>
+    <rect x="390" y="288" width="240" height="114" rx="10" fill="#FFFFFF" stroke="#C7D4E8"/>
+    <text class="ff box-title" x="408" y="314">Cloud Tasks</text>
+    <text class="ff box-sub" x="408" y="334">opencube-intel-runs</text>
+    <text class="ff box-sub" x="408" y="352">max 5 concurrent</text>
+    <text class="ff box-sub" x="408" y="370">deterministic task names</text>
+    <text class="ff box-kind" x="408" y="390">OIDC-SIGNED DELIVERY</text>
+  </g>
+
+  <g>
+    <rect x="650" y="288" width="240" height="114" rx="10" fill="#FFFFFF" stroke="#C7D4E8"/>
+    <text class="ff box-title" x="668" y="314">Vertex AI</text>
+    <text class="ff box-sub" x="668" y="334">Gemini</text>
+    <text class="ff box-sub" x="668" y="352">schema-constrained output</text>
+    <text class="ff box-sub" x="668" y="370">+ Google Search grounding</text>
+    <text class="ff box-kind" x="668" y="390">CALLED BY AGENTS 2 &amp; 3</text>
+  </g>
+
+  <g>
+    <rect x="910" y="288" width="230" height="114" rx="10" fill="#FFFFFF" stroke="#C7D4E8"/>
+    <text class="ff box-title" x="928" y="314">Places API (New)</text>
+    <text class="ff box-sub" x="928" y="334">Business discovery</text>
+    <text class="ff box-sub" x="928" y="352">and identity</text>
+    <text class="ff box-sub" x="928" y="370">retrieval only</text>
+    <text class="ff box-kind" x="928" y="390">NEVER EVIDENCE</text>
+  </g>
+
+  <!-- ── band C: agentic execution ───────────────────────────────────── -->
+  <rect x="90" y="456" width="1070" height="196" rx="14" fill="#FAF8F6" stroke="#EAE4DC"/>
+  <text class="ff band-label" x="112" y="480">AGENTIC EXECUTION — BACKGROUND</text>
+
+  <g>
+    <rect x="130" y="496" width="240" height="130" rx="10" fill="#FFFFFF" stroke="#DDD6CC"/>
+    <text class="ff box-title" x="148" y="522">1 · Market Scout</text>
+    <text class="ff box-kind" x="148" y="540">AI AGENT</text>
+    <text class="ff box-sub" x="148" y="562">5 submarket queries</text>
+    <text class="ff box-sub" x="148" y="580">40 raw → 10 selected</text>
+    <text class="ff box-sub" x="148" y="598">outcome-blind selection</text>
+    <rect x="148" y="606" width="104" height="16" rx="8" fill="#EEF3FA" stroke="#D6E1F0"/>
+    <text class="ff chip-text" x="158" y="617">PLACES API</text>
+  </g>
+
+  <g>
+    <rect x="390" y="496" width="240" height="130" rx="10" fill="#FFFFFF" stroke="#DDD6CC"/>
+    <text class="ff box-title" x="408" y="522">2 · Business Investigator</text>
+    <text class="ff box-kind" x="408" y="540">AI AGENT</text>
+    <text class="ff box-sub" x="408" y="562">reads the business's own</text>
+    <text class="ff box-sub" x="408" y="580">public pages · 1 task each</text>
+    <text class="ff box-sub" x="408" y="598">evidence, then hypothesis</text>
+    <rect x="408" y="606" width="146" height="16" rx="8" fill="#EEF3FA" stroke="#D6E1F0"/>
+    <text class="ff chip-text" x="418" y="617">GEMINI · 3 CALLS EACH</text>
+  </g>
+
+  <g>
+    <rect x="650" y="496" width="240" height="130" rx="10" fill="#FFFFFF" stroke="#DDD6CC"/>
+    <text class="ff box-title" x="668" y="522">3 · Verification Agent</text>
+    <text class="ff box-kind" x="668" y="540">AI AGENT</text>
+    <text class="ff box-sub" x="668" y="562">independent sources only</text>
+    <text class="ff box-sub" x="668" y="580">discovery and reasoning</text>
+    <text class="ff box-sub" x="668" y="598">are separate calls</text>
+    <rect x="668" y="606" width="132" height="16" rx="8" fill="#EEF3FA" stroke="#D6E1F0"/>
+    <text class="ff chip-text" x="678" y="617">GEMINI · 2 CALLS</text>
+  </g>
+
+  <g>
+    <rect x="910" y="496" width="230" height="130" rx="10" fill="#FFFFFF" stroke="#E2600A" stroke-width="2"/>
+    <text class="ff box-title" x="928" y="522">4 · Opportunity Matcher</text>
+    <text class="ff box-kind" x="928" y="540" fill="#C1520A">DETERMINISTIC ENGINE</text>
+    <text class="ff box-sub" x="928" y="562">fixed 18-cell table</text>
+    <text class="ff box-sub" x="928" y="580">same input → same answer</text>
+    <text class="ff box-sub" x="928" y="598">MATCHED / NOT / UNRESOLVED</text>
+    <rect x="928" y="606" width="126" height="16" rx="8" fill="#FDF1E7" stroke="#F2CDA9"/>
+    <text class="ff chip-text-brand" x="938" y="617">NO MODEL CALL</text>
+  </g>
+
+  <!-- ── band D: data / decision ─────────────────────────────────────── -->
+  <rect x="90" y="690" width="1070" height="172" rx="14" fill="#FAF8F6" stroke="#EAE4DC"/>
+  <text class="ff band-label" x="112" y="714">DATA / DECISION</text>
+
+  <g>
+    <rect x="130" y="726" width="1010" height="118" rx="10" fill="#FFFFFF" stroke="#DDD6CC"/>
+    <text class="ff fs-title" x="635" y="754" text-anchor="middle">Firestore — Native mode · us-east1</text>
+    <text class="ff fs-cols" x="635" y="782" text-anchor="middle">runs · businesses · investigations · evidence · hypotheses · verifications · opportunity_matches · usage_metadata</text>
+    <text class="ff box-sub" x="635" y="806" text-anchor="middle">Canonical workflow state. Evidence keeps its provenance: collected_by = business_investigator_v1 or verification_loop_v1.</text>
+    <text class="ff box-sub" x="635" y="826" text-anchor="middle">Progress is derived by query at read time, never stored as a counter.</text>
+  </g>
+
+  <!-- ── edges ───────────────────────────────────────────────────────── -->
+
+  <!-- frontend → cloud run -->
+  <path d="M 250 202 L 250 288" fill="none" stroke="#8A8178" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <text class="ff edge-label-b" x="264" y="232">POST /runs → 202 Accepted</text>
+  <text class="ff edge-label" x="264" y="248">the browser never waits on analysis</text>
+
+  <!-- cloud run → cloud tasks -->
+  <path d="M 370 345 L 386 345" fill="none" stroke="#8A8178" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+  <!-- dispatch bus -->
+  <path d="M 510 402 L 510 438" fill="none" stroke="#8A8178" stroke-width="1.6"/>
+  <path d="M 250 438 L 770 438" fill="none" stroke="#8A8178" stroke-width="1.6"/>
+  <path d="M 250 438 L 250 494" fill="none" stroke="#8A8178" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <path d="M 510 438 L 510 494" fill="none" stroke="#8A8178" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <path d="M 770 438 L 770 494" fill="none" stroke="#8A8178" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <text class="ff edge-label" x="258" y="452">SCOUT ×1</text>
+  <text class="ff edge-label" x="518" y="452">INVESTIGATE ×10, in parallel</text>
+  <text class="ff edge-label" x="778" y="452">FINALIZE ×1</text>
+  <text class="ff edge-label" x="1140" y="480" text-anchor="end">each stage enqueues the next — Cloud Tasks admits each named task exactly once</text>
+
+  <!-- verification → matcher -->
+  <path d="M 890 540 L 906 540" fill="none" stroke="#E2600A" stroke-width="1.8" marker-end="url(#arrow-o)"/>
+
+  <!-- writes to firestore -->
+  <path d="M 250 626 L 250 698" fill="none" stroke="#8A8178" stroke-width="1.4" marker-end="url(#arrow)"/>
+  <path d="M 510 626 L 510 698" fill="none" stroke="#8A8178" stroke-width="1.4" marker-end="url(#arrow)"/>
+  <path d="M 770 626 L 770 698" fill="none" stroke="#8A8178" stroke-width="1.4" marker-end="url(#arrow)"/>
+  <path d="M 1025 626 L 1025 698" fill="none" stroke="#E2600A" stroke-width="1.6" marker-end="url(#arrow-o)"/>
+  <text class="ff edge-label" x="1038" y="670">30 decisions</text>
+
+  <!-- firestore → frontend (read path, left gutter) -->
+  <path d="M 130 785 L 58 785 L 58 157 L 126 157" fill="none" stroke="#8A8178" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <text class="ff edge-label" x="52" y="470" text-anchor="middle" transform="rotate(-90 52 470)">GET /runs/:id · /matches — polled every 15s, never streamed</text>
+
+  <!-- frontend → human gate -->
+  <path d="M 550 157 L 716 157" fill="none" stroke="#8A8178" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <text class="ff edge-label" x="633" y="150" text-anchor="middle">evidence chain</text>
+
+  <!-- ── legend ──────────────────────────────────────────────────────── -->
+  <g>
+    <rect x="130" y="895" width="14" height="14" rx="4" fill="#FFFFFF" stroke="#C7D4E8"/>
+    <text class="ff legend" x="152" y="906">Google Cloud managed service</text>
+
+    <rect x="360" y="895" width="14" height="14" rx="4" fill="#FFFFFF" stroke="#DDD6CC"/>
+    <text class="ff legend" x="382" y="906">Generative agent — reasons over sources with Gemini</text>
+
+    <rect x="700" y="895" width="14" height="14" rx="4" fill="#FFFFFF" stroke="#E2600A" stroke-width="2"/>
+    <text class="ff legend" x="722" y="906">Deterministic decision engine — no model, fully auditable</text>
+  </g>
+</svg>
