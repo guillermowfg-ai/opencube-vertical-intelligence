@@ -7,6 +7,7 @@
  */
 
 import { useState, type ReactNode } from "react";
+import { isJudgeMode } from "../product/mode";
 import { NavLink, useLocation } from "react-router-dom";
 import { useI18n, type Language } from "../i18n";
 import { cx } from "../lib/cx";
@@ -137,12 +138,18 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <span aria-hidden="true" className="size-1.5 rounded-full bg-green-600" />
                 {t.nav.evidenceBadge}
               </span>
+              {isJudgeMode ? (
+                <span className="hidden items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-800 sm:inline-flex">
+                  {t.judge.badge}
+                </span>
+              ) : null}
               <LanguageSwitcher />
             </div>
           </div>
         </header>
 
         <main id="main" className="mx-auto w-full max-w-[1400px] px-5 py-8 sm:px-8">
+          <JudgeModeNotice />
           {children}
         </main>
       </div>
@@ -347,5 +354,31 @@ function IconBook({ className }: IconProps) {
         strokeLinejoin="round"
       />
     </svg>
+  );
+}
+
+/**
+ * Judge Mode notice.
+ *
+ * Rendered only in the public read-only build. It says what the environment is
+ * and why execution is off, so an empty launch action reads as a deliberate
+ * boundary rather than a broken product.
+ */
+function JudgeModeNotice() {
+  const { t } = useI18n();
+  if (!isJudgeMode) return null;
+  return (
+    <div
+      role="status"
+      className="mb-6 rounded-2xl border border-brand-200 bg-brand-50/70 px-5 py-4"
+    >
+      <p className="flex items-center gap-2 text-sm font-semibold text-brand-800">
+        <span aria-hidden="true" className="size-1.5 rounded-full bg-brand-500" />
+        {t.judge.title}
+      </p>
+      <p className="mt-1.5 max-w-3xl text-sm leading-relaxed text-ink-soft">
+        {t.judge.body}
+      </p>
+    </div>
   );
 }

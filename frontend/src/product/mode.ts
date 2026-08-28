@@ -20,3 +20,10 @@ export const executionMode: ExecutionMode =
   import.meta.env.VITE_EXECUTION_MODE === "readonly" ? "readonly" : "product";
 
 export const canLaunchTasks = executionMode === "product";
+
+/**
+ * Read-only mode still shows the New Task journey. The page itself states
+ * plainly that execution is unavailable and `api.createTask` refuses, so the
+ * product story stays walkable without a launch ever being possible.
+ */
+export const isJudgeMode = executionMode === "readonly";

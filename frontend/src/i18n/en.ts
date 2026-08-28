@@ -205,6 +205,13 @@ export const en = {
    * back to whatever the back end sent, so a new opportunity or service shows
    * up rather than disappearing.
    */
+  judge: {
+    badge: "Read-only Judge Mode",
+    title: "Live production data · Read-only Judge Mode",
+    body:
+      "This public demo displays real completed production runs. Fresh execution is disabled here to prevent anonymous consumption of paid AI and cloud resources.",
+  },
+
   conservative: {
     title: "Most reasons to reach out did not survive",
     headline: "{rejected} of {total} possible reasons to reach out were rejected.",

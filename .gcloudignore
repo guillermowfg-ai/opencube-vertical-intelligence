@@ -1,0 +1,27 @@
+# Keep the Cloud Build upload to source. Everything here is either rebuilt in
+# the image, is local-only state, or must never leave this machine.
+.git/
+.gitignore
+.claude/
+
+# Local secrets and environment. Never uploaded.
+**/.env
+**/.env.local
+**/.env.*.local
+
+# Rebuilt inside the image.
+**/node_modules/
+frontend/dist/
+**/.venv/
+
+# Local caches and tooling state.
+**/__pycache__/
+**/*.pyc
+**/.pytest_cache/
+**/.ruff_cache/
+**/.google-agents-cli/
+
+# Not needed to build or run the judge image.
+design-references/
+docs/
+DECISIONS.md

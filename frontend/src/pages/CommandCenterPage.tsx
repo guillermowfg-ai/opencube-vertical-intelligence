@@ -385,7 +385,7 @@ function TaskLauncher({
           </ol>
         </div>
 
-        {canLaunchTasks ? <NewTaskButton label={copy.heroAction} /> : null}
+        <NewTaskButton label={copy.heroAction} />
       </div>
     </section>
   );

@@ -27,7 +27,7 @@ export function TasksPage() {
         eyebrow={t.tasks.eyebrow}
         title={t.tasks.title}
         subtitle={t.tasks.subtitle}
-        actions={canLaunchTasks ? <NewTaskButton label={t.tasks.newTask} /> : undefined}
+        actions={<NewTaskButton label={t.tasks.newTask} />}
       />
 
       {error && !data ? (
@@ -39,7 +39,7 @@ export function TasksPage() {
           <EmptyState
             title={t.tasks.empty}
             description={canLaunchTasks ? t.tasks.emptyHelp : t.runs.emptyHelp}
-            action={canLaunchTasks ? <NewTaskButton label={t.tasks.newTask} /> : undefined}
+            action={<NewTaskButton label={t.tasks.newTask} />}
           />
         </Card>
       ) : (

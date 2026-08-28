@@ -189,6 +189,13 @@ export const es: Dictionary = {
     },
   },
 
+  judge: {
+    badge: "Modo Jurado · solo lectura",
+    title: "Datos de producción reales · Modo Jurado de solo lectura",
+    body:
+      "Esta demo pública muestra tareas de producción reales ya completadas. La ejecución de tareas nuevas está desactivada aquí para evitar el consumo anónimo de recursos de IA y de nube de pago.",
+  },
+
   conservative: {
     title: "La mayoría de los motivos para contactar no se sostuvieron",
     headline: "Descartamos {rejected} de {total} posibles razones para contactar.",
