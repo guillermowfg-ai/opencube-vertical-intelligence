@@ -1,0 +1,27 @@
+# Build the public read-only Judge Mode image.
+#
+# A dedicated config rather than `gcloud run deploy --source .`, because that
+# form builds the root `Dockerfile` and this repository deliberately has none:
+# the production image is opencube-intel/Dockerfile and the judge image is
+# Dockerfile.judge. Naming the file explicitly here is what keeps those two
+# from ever being confused for one another.
+#
+# Build context is the repository root, because the image needs both the
+# backend and the interface. `.gcloudignore` keeps local state, node_modules,
+# .venv and every .env out of the upload.
+
+substitutions:
+  _IMAGE: us-east1-docker.pkg.dev/${PROJECT_ID}/cloud-run-source-deploy/opencube-intel-judge:latest
+
+steps:
+  - name: gcr.io/cloud-builders/docker
+    id: build
+    args: ["build", "-f", "Dockerfile.judge", "-t", "${_IMAGE}", "."]
+
+images:
+  - "${_IMAGE}"
+
+timeout: 1800s
+
+options:
+  logging: CLOUD_LOGGING_ONLY
