@@ -205,6 +205,56 @@ export const en = {
    * back to whatever the back end sent, so a new opportunity or service shows
    * up rather than disappearing.
    */
+  conservative: {
+    title: "Most reasons to reach out did not survive",
+    headline: "{rejected} of {total} possible reasons to reach out were rejected.",
+    principle:
+      "OpenCube is designed to stop unsupported outreach, not to manufacture reasons to contact.",
+    evaluated: "reasons evaluated",
+    rejected: "rejected",
+    worthExploring: "worth exploring",
+    needsReview: "needs review",
+    short: "{rejected} of {total} rejected",
+  },
+
+  action: {
+    MATCHED: {
+      label: "Worth exploring",
+      detail: "A person still has to approve this before anyone is contacted.",
+    },
+    NOT_MATCHED: {
+      label: "Do not contact on this basis",
+      detail:
+        "This is about this one reason, not about the business. Another reason may still hold.",
+    },
+    UNRESOLVED: {
+      label: "Do not contact yet",
+      detail: "Needs human review — the evidence disagrees with itself.",
+    },
+  },
+
+  chain: {
+    title: "How we reached this",
+    subtitle:
+      "The whole chain, in order: what we saw, what it might mean, what the evidence said, and what we concluded.",
+    observation: "What we saw",
+    observationHelp: "Recorded from the business's own public pages, with a link to where.",
+    problem: "What that might mean",
+    problemHelp: "What the Investigator thought the observation could indicate.",
+    check: "What the evidence said",
+    checkHelp: "Whether the evidence backed that up, went against it, or settled nothing.",
+    decision: "What we concluded",
+    action: "What happens next",
+    firstParty: "The business's own public sources",
+    firstPartyHelp: "Pages the business controls.",
+    outside: "Independent outside sources",
+    outsideHelp: "Sites the business does not control.",
+    noFirstParty: "No public evidence could be retrieved from this business's own site.",
+    noFirstPartyWithOutside:
+      "No public evidence could be retrieved from this business's own site. Outside sources were still checked separately.",
+    noOutside: "No outside source was read for this one.",
+  },
+
   commandCenter: {
     heroEyebrow: "OpenCube Intel",
     heroTitle: "Your AI operations team",
@@ -222,6 +272,10 @@ export const en = {
     recentSubtitle: "The last few things your team finished.",
     snapshotEyebrow: "Context",
     snapshotTitle: "Everything so far",
+    snapshotExcluded:
+      "{count} unfinished task is not counted here — its work never completed.",
+    snapshotExcludedPlural:
+      "{count} unfinished tasks are not counted here — their work never completed.",
     snapshotSubtitle:
       "Totals across every task in this market. Each number comes from something we actually saw and saved.",
   },
@@ -380,7 +434,7 @@ export const en = {
       investigatorWorking: "{done} of {total} researched",
       investigatorDone: "{count} businesses researched",
       verifierWorking: "Checking findings against outside sources",
-      verifierDone: "{count} findings checked",
+      verifierDone: "{count} opportunities checked",
       matcherWorking: "Weighing up the evidence",
       matcherDone: "{count} opportunities assessed",
       combinedNote:
@@ -491,7 +545,7 @@ export const en = {
       researched: "Researched",
       researchedHint: "{count} things we saw and saved",
       secondOpinions: "Second opinions",
-      secondOpinionsHint: "Across {count} findings",
+      secondOpinionsHint: "Across {count} evaluated opportunities",
       goodFit: "Good fit",
       goodFitHint: "of {count} we assessed",
       needsPerson: "Needs a person",
@@ -556,7 +610,7 @@ export const en = {
       status: "Status",
       progress: "Businesses",
       outcomes: "Opportunities",
-      findings: "Findings",
+      findings: "Opportunities evaluated",
       started: "Started",
       duration: "Took",
       awaiting: "Finding businesses",
@@ -591,8 +645,8 @@ export const en = {
       inProgressHint: "Being researched now",
       failed: "Failed",
       failedHint: "Could not be researched",
-      findings: "Findings",
-      findingsHint: "Things we noticed",
+      findings: "Opportunities evaluated",
+      findingsHint: "Definitions checked against each business",
       secondOpinions: "Second opinions",
       secondOpinionsHint: "of {count} attempted",
       opportunities: "Opportunities",
@@ -627,8 +681,8 @@ export const en = {
       status: "Research",
       sources: "Pages read",
       evidence: "What we saw",
-      findings: "Findings",
-      findingsCount: "{count} found",
+      findings: "Opportunities evaluated",
+      findingsCount: "{count} evaluated",
       opportunities: "Opportunities",
       goodFit: "{count} good fit",
       site: "Website",
@@ -775,7 +829,7 @@ export const en = {
       website: "Website",
       runs: "Analyses",
       runsTitle: "{total} research passes, {done} finished",
-      findings: "Findings",
+      findings: "Opportunities evaluated",
       goodFit: "Good fit",
       toReview: "To review",
       lastLooked: "Last looked at",

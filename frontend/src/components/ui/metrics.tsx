@@ -150,12 +150,18 @@ export function ResultDonut({
   segments,
   totalLabel,
   emptyMessage,
+  headline,
+  principle,
   children,
 }: {
   title: string;
   segments: Segment[];
   totalLabel: string;
   emptyMessage: string;
+  /** The conservative headline: how much was rejected, out of how much. Always
+   * computed by the caller from the data, never a fixed string. */
+  headline?: string;
+  principle?: string;
   children?: ReactNode;
 }) {
   const total = segments.reduce((acc, s) => acc + s.count, 0);
@@ -191,6 +197,12 @@ export function ResultDonut({
       {total === 0 ? (
         <p className="mt-4 text-sm text-vault-ink-muted">{emptyMessage}</p>
       ) : (
+        <>
+        {headline ? (
+          <p className="mt-3 text-lg leading-snug font-semibold text-vault-ink sm:text-xl">
+            {headline}
+          </p>
+        ) : null}
         <div className="mt-5 flex flex-wrap items-center gap-x-8 gap-y-6">
           <div className="relative shrink-0" style={{ width: size, height: size }}>
             <svg
@@ -268,6 +280,12 @@ export function ResultDonut({
             </div>
           ) : null}
         </div>
+        {principle ? (
+          <p className="mt-5 border-t border-vault-line pt-4 text-sm leading-relaxed text-vault-ink-muted">
+            {principle}
+          </p>
+        ) : null}
+        </>
       )}
     </section>
   );

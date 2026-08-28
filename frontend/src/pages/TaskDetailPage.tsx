@@ -96,6 +96,7 @@ export function TaskDetailPage() {
 
   const data = run.data;
   const totalBusinesses = data.businesses_total ?? data.investigations_total;
+  const evaluatedCount = matches.data?.matches.length ?? 0;
   const fitCounts = {
     matches_matched: count(matches.data?.matches ?? [], "MATCHED"),
     matches_not_matched: count(matches.data?.matches ?? [], "NOT_MATCHED"),
@@ -179,8 +180,17 @@ export function TaskDetailPage() {
         <ResultDonut
           title={t.runDetail.fit.title}
           segments={fitSegments(fitCounts, status)}
-          totalLabel={t.nav.matches}
+          totalLabel={t.conservative.evaluated}
           emptyMessage={live ? t.runDetail.fit.emptyLive : t.runDetail.fit.emptyDone}
+          headline={
+            evaluatedCount > 0
+              ? fill(t.conservative.headline, {
+                  rejected: fitCounts.matches_not_matched,
+                  total: evaluatedCount,
+                })
+              : undefined
+          }
+          principle={evaluatedCount > 0 ? t.conservative.principle : undefined}
         />
       </section>
 
@@ -346,12 +356,17 @@ function BusinessesPanel({
           />
         ),
       },
-      { key: "sources", header: copy.sources, numeric: true, render: (row) => row.source_count },
+      {
+        key: "sources",
+        header: copy.sources,
+        numeric: true,
+        render: (row) => <ZeroAware value={row.source_count} row={row} />,
+      },
       {
         key: "evidence",
         header: copy.evidence,
         numeric: true,
-        render: (row) => row.evidence_count,
+        render: (row) => <ZeroAware value={row.evidence_count} row={row} />,
       },
       {
         key: "findings",
@@ -422,6 +437,23 @@ function BusinessesPanel({
       empty={<EmptyState title={copy.empty} description={copy.emptyHelp} />}
       dense
     />
+  );
+}
+
+/**
+ * A zero here means "we could not read this business's own site", which is a
+ * finding, not a gap in the data. It says so on hover, and notes that outside
+ * sources were checked separately when they were.
+ */
+function ZeroAware({ value, row }: { value: number; row: BusinessRow }) {
+  const { t } = useI18n();
+  if (value > 0) return <>{value}</>;
+  const help =
+    row.verifications_total > 0 ? t.chain.noFirstPartyWithOutside : t.chain.noFirstParty;
+  return (
+    <span className="cursor-help text-ink-muted underline decoration-dotted underline-offset-2" title={help}>
+      0
+    </span>
   );
 }
 

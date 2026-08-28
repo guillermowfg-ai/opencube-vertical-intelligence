@@ -26,15 +26,17 @@ function readStored(): Language | null {
   }
 }
 
+/**
+ * English on a first visit, always.
+ *
+ * The browser's own language is deliberately not consulted. A Spanish-locale
+ * browser landing on an English demo and silently switching would be a
+ * surprise, and the product's primary language is English. Someone who picks
+ * Spanish keeps it -- the stored preference is the only thing that overrides
+ * the default.
+ */
 function detect(): Language {
-  const stored = readStored();
-  if (stored) return stored;
-  const preferred = typeof navigator !== "undefined" ? (navigator.languages ?? []) : [];
-  for (const tag of preferred) {
-    if (tag.toLowerCase().startsWith("es")) return "es";
-    if (tag.toLowerCase().startsWith("en")) return "en";
-  }
-  return "en";
+  return readStored() ?? "en";
 }
 
 export function I18nProvider({ children }: { children: ReactNode }) {

@@ -175,7 +175,12 @@ def test_overview_verification_state_reuses_the_matcher_classification(
     client, store, monkeypatch
 ):
     """The UI vocabulary must come from the Matcher, not a parallel copy."""
-    seed_run_with_investigations(store, ["biz-a"], status=InvestigationStatus.COMPLETED)
+    seed_run_with_investigations(
+        store,
+        ["biz-a"],
+        status=InvestigationStatus.COMPLETED,
+        run_status=RunStatus.COMPLETED,
+    )
     hypothesis = make_hypothesis("hyp-1", "biz-a")
     store.save_hypothesis(hypothesis)
     store.save_verification(
@@ -196,6 +201,67 @@ def test_overview_verification_state_reuses_the_matcher_classification(
 
     assert calls == ["ver-1"]
     assert {c["key"]: c["count"] for c in body["verification_state_counts"]}["FAILED"] == 1
+
+
+def test_overview_counts_only_runs_whose_analysis_finished(client, seeded, store):
+    """A run still in flight keeps its place in history but must not be
+    counted as a result. This is the shape of the pre-async run 01cbfec1:
+    one completed investigation, three hypotheses, and no matcher output,
+    left non-terminal by a code path that no longer exists."""
+    stranded = seed_run_with_investigations(
+        store,
+        ["biz-stranded"],
+        status=InvestigationStatus.COMPLETED,
+        run_status=RunStatus.IN_PROGRESS,
+        run_id="run-stranded",
+    )
+    for index in range(3):
+        store.save_hypothesis(
+            make_hypothesis(
+                f"hyp-stranded-{index}",
+                "biz-stranded",
+                status=OpportunityStatus.CONTRADICTED,
+                run_id=stranded.run_id,
+            )
+        )
+
+    body = client.get("/overview").json()
+
+    # The seeded terminal run's numbers are untouched by the stranded one.
+    assert body["kpis"]["hypotheses_total"] == 3
+    assert body["kpis"]["businesses_discovered"] == 2
+    assert body["active_runs_excluded"] == 1
+
+    hypothesis = {c["key"]: c["count"] for c in body["hypothesis_status_counts"]}
+    assert hypothesis["CONTRADICTED"] == 1, "the stranded run's 3 must not be counted"
+
+    # It is still visible in history, with its real status.
+    assert "run-stranded" in {r["run_id"] for r in body["recent_runs"]}
+    assert body["kpis"]["runs_total"] == 2
+    assert body["kpis"]["runs_active"] == 1
+
+
+def test_overview_still_counts_a_failed_run_that_produced_results(client, store, seeded):
+    """A failed run is terminal and its output is real (DECISIONS.md #30), so
+    excluding it would throw away work that genuinely completed."""
+    failed = seed_run_with_investigations(
+        store,
+        ["biz-failed"],
+        status=InvestigationStatus.COMPLETED,
+        run_status=RunStatus.FAILED,
+        run_id="run-failed",
+    )
+    hypothesis = make_hypothesis(
+        "hyp-failed", "biz-failed", status=OpportunityStatus.CONFIRMED, run_id=failed.run_id
+    )
+    store.save_hypothesis(hypothesis)
+    store.save_opportunity_match(opportunity_matcher.build_match(hypothesis, None))
+
+    body = client.get("/overview").json()
+
+    assert body["kpis"]["hypotheses_total"] == 4
+    assert body["kpis"]["matches_total"] == 4
+    assert body["active_runs_excluded"] == 0
 
 
 def test_overview_handles_an_empty_platform(client, store):

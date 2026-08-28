@@ -189,6 +189,58 @@ export const es: Dictionary = {
     },
   },
 
+  conservative: {
+    title: "La mayoría de los motivos para contactar no se sostuvieron",
+    headline: "Descartamos {rejected} de {total} posibles razones para contactar.",
+    principle:
+      "OpenCube está diseñado para detener contactos sin respaldo, no para inventar motivos para contactar.",
+    evaluated: "motivos evaluados",
+    rejected: "descartados",
+    worthExploring: "vale la pena explorar",
+    needsReview: "requieren revisión",
+    short: "{rejected} de {total} descartados",
+  },
+
+  action: {
+    MATCHED: {
+      label: "Vale la pena explorarla",
+      detail: "Aún requiere aprobación humana antes de contactar a nadie.",
+    },
+    NOT_MATCHED: {
+      label: "No contactar por este motivo",
+      detail:
+        "Esto se refiere solo a este motivo, no al negocio. Otro motivo podría seguir en pie.",
+    },
+    UNRESOLVED: {
+      label: "No contactar todavía",
+      detail: "Requiere revisión humana: la evidencia se contradice.",
+    },
+  },
+
+  chain: {
+    title: "Cómo llegamos a esto",
+    subtitle:
+      "Toda la cadena, en orden: qué vimos, qué podría significar, qué dijo la evidencia y qué concluimos.",
+    observation: "Qué vimos",
+    observationHelp:
+      "Registrado de las páginas públicas del propio negocio, con enlace a dónde lo vimos.",
+    problem: "Qué podría significar",
+    problemHelp: "Lo que el investigador pensó que la observación podía indicar.",
+    check: "Qué dijo la evidencia",
+    checkHelp: "Si la evidencia lo respaldó, lo contradijo o no aclaró nada.",
+    decision: "Qué concluimos",
+    action: "Qué pasa ahora",
+    firstParty: "Fuentes públicas del propio negocio",
+    firstPartyHelp: "Páginas que el negocio controla.",
+    outside: "Fuentes externas independientes",
+    outsideHelp: "Sitios que el negocio no controla.",
+    noFirstParty:
+      "No pudimos obtener evidencia pública del sitio propio de este negocio.",
+    noFirstPartyWithOutside:
+      "No pudimos obtener evidencia pública del sitio propio de este negocio. Las fuentes externas se revisaron por separado.",
+    noOutside: "No se leyó ninguna fuente externa en este caso.",
+  },
+
   commandCenter: {
     heroEyebrow: "OpenCube Intel",
     heroTitle: "Tu equipo de operaciones con IA",
@@ -206,6 +258,10 @@ export const es: Dictionary = {
     recentSubtitle: "Lo último que terminó tu equipo.",
     snapshotEyebrow: "Contexto",
     snapshotTitle: "Todo hasta ahora",
+    snapshotExcluded:
+      "{count} tarea sin terminar no se cuenta aquí: su trabajo nunca se completó.",
+    snapshotExcludedPlural:
+      "{count} tareas sin terminar no se cuentan aquí: su trabajo nunca se completó.",
     snapshotSubtitle:
       "Totales de todas las tareas de este mercado. Cada número viene de algo que realmente vimos y guardamos.",
   },
@@ -364,7 +420,7 @@ export const es: Dictionary = {
       investigatorWorking: "{done} de {total} investigados",
       investigatorDone: "{count} negocios investigados",
       verifierWorking: "Contrastando hallazgos con fuentes externas",
-      verifierDone: "{count} hallazgos contrastados",
+      verifierDone: "{count} oportunidades contrastadas",
       matcherWorking: "Sopesando la evidencia",
       matcherDone: "{count} oportunidades evaluadas",
       combinedNote:
@@ -475,7 +531,7 @@ export const es: Dictionary = {
       researched: "Investigados",
       researchedHint: "{count} cosas que vimos y guardamos",
       secondOpinions: "Segundas opiniones",
-      secondOpinionsHint: "Sobre {count} hallazgos",
+      secondOpinionsHint: "Sobre {count} oportunidades evaluadas",
       goodFit: "Encajan",
       goodFitHint: "de {count} evaluadas",
       needsPerson: "Requieren una persona",
@@ -542,7 +598,7 @@ export const es: Dictionary = {
       status: "Estado",
       progress: "Negocios",
       outcomes: "Oportunidades",
-      findings: "Hallazgos",
+      findings: "Oportunidades evaluadas",
       started: "Empezó",
       duration: "Duró",
       awaiting: "Buscando negocios",
@@ -577,8 +633,8 @@ export const es: Dictionary = {
       inProgressHint: "Investigándose ahora",
       failed: "Fallaron",
       failedHint: "No se pudieron investigar",
-      findings: "Hallazgos",
-      findingsHint: "Cosas que notamos",
+      findings: "Oportunidades evaluadas",
+      findingsHint: "Definiciones revisadas en cada negocio",
       secondOpinions: "Segundas opiniones",
       secondOpinionsHint: "de {count} intentadas",
       opportunities: "Oportunidades",
@@ -613,8 +669,8 @@ export const es: Dictionary = {
       status: "Investigación",
       sources: "Páginas leídas",
       evidence: "Lo que vimos",
-      findings: "Hallazgos",
-      findingsCount: "{count} encontrados",
+      findings: "Oportunidades evaluadas",
+      findingsCount: "{count} evaluadas",
       opportunities: "Oportunidades",
       goodFit: "{count} encajan",
       site: "Sitio web",
@@ -763,7 +819,7 @@ export const es: Dictionary = {
       website: "Sitio web",
       runs: "Análisis",
       runsTitle: "{total} investigaciones, {done} terminadas",
-      findings: "Hallazgos",
+      findings: "Oportunidades evaluadas",
       goodFit: "Encajan",
       toReview: "Por revisar",
       lastLooked: "Última revisión",

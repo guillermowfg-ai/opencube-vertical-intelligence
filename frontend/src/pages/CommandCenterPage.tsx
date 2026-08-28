@@ -66,6 +66,10 @@ export function CommandCenterPage() {
 
   const { kpis } = data;
   const activeRuns = data.recent_runs.filter((run) => isRunLive(run.status));
+  // Derived from the same counts the donut renders -- never a fixed number.
+  const evaluatedCount = data.match_status_counts.reduce((sum, c) => sum + c.count, 0);
+  const rejectedCount =
+    data.match_status_counts.find((c) => c.key === "NOT_MATCHED")?.count ?? 0;
   const recentRuns = data.recent_runs.filter((run) => !isRunLive(run.status)).slice(0, 2);
 
   return (
@@ -119,7 +123,16 @@ export function CommandCenterPage() {
       <SectionHeading
         eyebrow={t.commandCenter.snapshotEyebrow}
         title={t.commandCenter.snapshotTitle}
-        description={t.commandCenter.snapshotSubtitle}
+        description={
+          data.active_runs_excluded > 0
+            ? `${t.commandCenter.snapshotSubtitle} ${fill(
+                data.active_runs_excluded === 1
+                  ? t.commandCenter.snapshotExcluded
+                  : t.commandCenter.snapshotExcludedPlural,
+                { count: data.active_runs_excluded },
+              )}`
+            : t.commandCenter.snapshotSubtitle
+        }
       />
 
       <section aria-label={t.overview.title}>
@@ -171,13 +184,14 @@ export function CommandCenterPage() {
         <ResultDonut
           title={t.overview.fit.title}
           segments={toSegments(data.match_status_counts, "fit", status)}
-          totalLabel={t.nav.matches}
+          totalLabel={t.conservative.evaluated}
           emptyMessage={t.overview.fit.empty}
-        >
-          <p className="text-xs leading-relaxed text-vault-ink-muted">
-            {t.overview.fit.description}
-          </p>
-        </ResultDonut>
+          headline={fill(t.conservative.headline, {
+            rejected: rejectedCount,
+            total: evaluatedCount,
+          })}
+          principle={t.conservative.principle}
+        />
       </section>
 
       <section className="mt-6 grid items-start gap-6 lg:grid-cols-2">

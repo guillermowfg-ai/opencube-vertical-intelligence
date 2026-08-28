@@ -10,13 +10,14 @@
 
 import { Link, useParams } from "react-router-dom";
 import { api, useResource } from "../lib/api";
-import { reasonCodeLabel, verificationStateOf } from "../lib/domain";
+import { verificationStateOf } from "../lib/domain";
 import { useStatus } from "../lib/useStatus";
 import { fill, useI18n } from "../i18n";
 import { capabilityLabel, opportunityLabel } from "../product/labels";
 import { formatConfidence, formatDateTime, hostnameOf } from "../lib/format";
 import type { EvidenceItem, MatchDetail } from "../lib/types";
 import { Badge, Chip, StatusBadge } from "../components/ui/StatusBadge";
+import { ActionVerdict, ChainStep } from "../components/DecisionChain";
 import {
   Card,
   ExternalLink,
@@ -26,7 +27,6 @@ import {
   PageHeader,
   SectionHeading,
 } from "../components/ui/primitives";
-import { cx } from "../lib/cx";
 import { EmptyState, ErrorState, SkeletonPanel } from "../components/ui/states";
 import type { Dictionary } from "../i18n";
 
@@ -112,117 +112,121 @@ export function MatchDetailPage() {
         }
       />
 
-      <ReconciliationStrip detail={data} />
+      {/* The conclusion leads: someone scanning this page must be able to see
+          what to do about this reason before reading any of the evidence. */}
+      <div className="mb-6">
+        <ActionVerdict status={match.match_status} />
+      </div>
 
-      <div className="mt-6 grid items-start gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <div className="space-y-6">
-          <Card>
-            <SectionHeading
-              eyebrow={t.matchDetail.step1.eyebrow}
-              title={t.matchDetail.step1.title}
-              description={t.matchDetail.step1.description}
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <Card>
+          <SectionHeading title={t.chain.title} description={t.chain.subtitle} />
+          <ol className="mt-2">
+            <ChainStep
+              index={1}
+              label={t.chain.observation}
+              help={t.chain.observationHelp}
+            >
+              <p className="eyebrow">{t.chain.firstParty}</p>
+              <p className="mb-3 text-xs text-ink-muted">{t.chain.firstPartyHelp}</p>
+              <EvidenceList
+                items={data.hypothesis_evidence}
+                emptyTitle={t.matchDetail.step2.empty}
+                emptyDescription={
+                  data.verification_evidence.length > 0
+                    ? t.chain.noFirstPartyWithOutside
+                    : t.chain.noFirstParty
+                }
+              />
+            </ChainStep>
+
+            <ChainStep
+              index={2}
+              label={t.chain.problem}
+              help={t.chain.problemHelp}
               action={<StatusBadge meta={status.finding(match.original_status)} />}
-            />
-            {hypothesis ? (
-              <>
-                <blockquote className="border-l-2 border-brand-300 pl-4 text-[0.9375rem] leading-relaxed text-ink">
-                  {hypothesis.statement}
-                </blockquote>
-                <dl className="mt-4 grid grid-cols-2 gap-4 border-t border-hairline pt-4 sm:grid-cols-4">
-                  <KeyValue label={t.matchDetail.step1.confidence}>
-                    <span className="numerals">{formatConfidence(hypothesis.confidence)}</span>
-                  </KeyValue>
-                  <KeyValue label={t.matchDetail.step1.supporting}>
-                    <span className="numerals">
-                      {hypothesis.supporting_evidence_ids.length}
-                    </span>
-                  </KeyValue>
-                  <KeyValue label={t.matchDetail.step1.contradicting}>
-                    <span className="numerals">
-                      {hypothesis.contradicting_evidence_ids.length}
-                    </span>
-                  </KeyValue>
-                  <KeyValue label={t.matchDetail.step1.id}>
-                    <Mono>{hypothesis.hypothesis_id}</Mono>
-                  </KeyValue>
-                </dl>
-              </>
-            ) : (
-              <EmptyState
-                compact
-                title={t.matchDetail.step1.empty}
-                description={t.matchDetail.step1.emptyHelp}
-              />
-            )}
-          </Card>
+            >
+              {hypothesis ? (
+                <>
+                  <blockquote className="border-l-2 border-brand-300 pl-4 text-[0.9375rem] leading-relaxed text-ink">
+                    {hypothesis.statement}
+                  </blockquote>
+                  <dl className="mt-3 grid grid-cols-3 gap-4">
+                    <KeyValue label={t.matchDetail.step1.confidence}>
+                      <span className="numerals">{formatConfidence(hypothesis.confidence)}</span>
+                    </KeyValue>
+                    <KeyValue label={t.matchDetail.step1.supporting}>
+                      <span className="numerals">
+                        {hypothesis.supporting_evidence_ids.length}
+                      </span>
+                    </KeyValue>
+                    <KeyValue label={t.matchDetail.step1.contradicting}>
+                      <span className="numerals">
+                        {hypothesis.contradicting_evidence_ids.length}
+                      </span>
+                    </KeyValue>
+                  </dl>
+                </>
+              ) : (
+                <EmptyState
+                  compact
+                  title={t.matchDetail.step1.empty}
+                  description={t.matchDetail.step1.emptyHelp}
+                />
+              )}
+            </ChainStep>
 
-          <Card>
-            <SectionHeading
-              eyebrow={t.matchDetail.step2.eyebrow}
-              title={t.matchDetail.step2.title}
-              description={t.matchDetail.step2.description}
-            />
-            <EvidenceList
-              items={data.hypothesis_evidence}
-              emptyTitle={t.matchDetail.step2.empty}
-              emptyDescription={t.matchDetail.step2.emptyHelp}
-            />
-          </Card>
-
-          <Card>
-            <SectionHeading
-              eyebrow={t.matchDetail.step3.eyebrow}
-              title={t.matchDetail.step3.title}
-              description={t.matchDetail.step3.description}
+            <ChainStep
+              index={3}
+              label={t.chain.check}
+              help={t.chain.checkHelp}
               action={<StatusBadge meta={status.secondOpinion(secondOpinionState)} />}
-            />
-            {verification ? (
-              <VerificationPanel
-                verification={verification}
-                evidence={data.verification_evidence}
-              />
-            ) : (
-              <EmptyState
-                compact
-                title={t.matchDetail.step3.empty}
-                description={t.matchDetail.step3.emptyHelp}
-              />
-            )}
-          </Card>
-        </div>
+            >
+              <p className="eyebrow">{t.chain.outside}</p>
+              <p className="mb-3 text-xs text-ink-muted">{t.chain.outsideHelp}</p>
+              {verification ? (
+                <VerificationPanel
+                  verification={verification}
+                  evidence={data.verification_evidence}
+                />
+              ) : (
+                <EmptyState
+                  compact
+                  title={t.matchDetail.step3.empty}
+                  description={t.matchDetail.step3.emptyHelp}
+                />
+              )}
+            </ChainStep>
+
+            <ChainStep
+              index={4}
+              label={t.chain.decision}
+              action={<StatusBadge meta={status.fit(match.match_status)} />}
+              last
+            >
+              <div className="rounded-xl bg-canvas p-4">
+                <p className="text-sm leading-relaxed text-ink">
+                  {plainReason(t, match.reason_code) ?? match.reasoning}
+                </p>
+                {/* The stored sentence is kept verbatim and never edited. The
+                    plain reading above is a translation of the same fixed cell
+                    -- and the only way a Spanish screen can explain the
+                    decision, since the stored wording is English-only. */}
+                <details className="mt-3">
+                  <summary className="cursor-pointer text-xs font-medium text-ink-muted transition hover:text-ink-soft">
+                    {t.matchDetail.step4.exactWording}
+                  </summary>
+                  <p className="mt-2 text-xs leading-relaxed text-ink-muted">
+                    {match.reasoning}
+                  </p>
+                  <Mono className="mt-2 inline-block">{match.reason_code}</Mono>
+                </details>
+              </div>
+            </ChainStep>
+          </ol>
+        </Card>
 
         <div className="space-y-6">
-          <Card>
-            <SectionHeading
-              eyebrow={t.matchDetail.step4.eyebrow}
-              title={t.matchDetail.step4.title}
-              description={t.matchDetail.step4.description}
-            />
-            <div className="rounded-xl bg-canvas p-4">
-              <p className="eyebrow">{t.matchDetail.step4.reasonCode}</p>
-              <p className="mt-1 text-sm font-semibold text-ink">
-                {reasonCodeLabel(match.reason_code)}
-              </p>
-              <Mono className="mt-2 inline-block">{match.reason_code}</Mono>
-            </div>
-            <p className="mt-4 text-sm leading-relaxed text-ink">
-              {plainReason(t, match.reason_code) ?? match.reasoning}
-            </p>
-            {/* The stored sentence is kept verbatim and never edited. The plain
-                reading above is a translation of the same fixed cell -- it is
-                also the only way a Spanish screen can explain the decision,
-                since the stored wording is English-only. */}
-            <details className="mt-3">
-              <summary className="cursor-pointer text-xs font-medium text-ink-muted transition hover:text-ink-soft">
-                {t.matchDetail.step4.exactWording}
-              </summary>
-              <p className="mt-2 text-xs leading-relaxed text-ink-muted">{match.reasoning}</p>
-            </details>
-            <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50/60 px-3.5 py-3 text-xs leading-relaxed text-amber-900">
-              {t.matchDetail.step4.caveat}
-            </p>
-          </Card>
-
           <Card>
             <SectionHeading
               title={t.matchDetail.capability.title}
@@ -333,61 +337,6 @@ export function MatchDetailPage() {
         </div>
       </div>
     </>
-  );
-}
-
-function ReconciliationStrip({ detail }: { detail: MatchDetail }) {
-  const { t } = useI18n();
-  const status = useStatus();
-  const { match } = detail;
-
-  const steps = [
-    { key: "finding", caption: t.matchDetail.strip.finding, meta: status.finding(match.original_status) },
-    {
-      key: "secondOpinion",
-      caption: t.matchDetail.strip.secondOpinion,
-      meta: status.secondOpinion(verificationStateOf(match)),
-    },
-    { key: "fit", caption: t.matchDetail.strip.fit, meta: status.fit(match.match_status) },
-  ];
-
-  return (
-    <div className="card flex flex-col gap-4 p-5 sm:flex-row sm:items-stretch sm:gap-0">
-      {steps.map((step, index) => (
-        <div
-          key={step.key}
-          className={cx(
-            "flex flex-1 items-center gap-4",
-            index > 0 && "sm:border-l sm:border-hairline sm:pl-6",
-            index < steps.length - 1 && "sm:pr-6",
-          )}
-        >
-          <div className="min-w-0 flex-1">
-            <p className="eyebrow">{step.caption}</p>
-            <div className="mt-2">
-              <StatusBadge meta={step.meta} />
-            </div>
-            <p className="mt-2 text-xs leading-relaxed text-ink-muted">{step.meta.meaning}</p>
-          </div>
-          {index < steps.length - 1 ? (
-            <svg
-              viewBox="0 0 16 16"
-              aria-hidden="true"
-              className="hidden size-4 shrink-0 text-brand-400 sm:block"
-            >
-              <path
-                d="M3 8h10M9 4l4 4-4 4"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          ) : null}
-        </div>
-      ))}
-    </div>
   );
 }
 

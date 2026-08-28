@@ -295,6 +295,22 @@ class _Corpus:
             failed_investigation_count=run.get("failed_investigation_count"),
         )
 
+    def terminal_run_ids(self) -> set[str]:
+        """Runs whose analysis actually finished, COMPLETED or FAILED.
+
+        A FAILED run is included on purpose: DECISIONS.md #30 -- one failed
+        business does not throw away the nine that succeeded, and that run's
+        verifications and matches are real output. What is excluded is a run
+        that never reached a terminal state, whose partial records describe
+        work still in flight (or, for a pre-async run, work no worker was ever
+        asked to finish).
+        """
+        return {
+            r.get("run_id", "")
+            for r in self.runs
+            if r.get("status") in _TERMINAL_RUN_VALUES
+        }
+
     def sorted_runs(self) -> list[dict]:
         """Newest first. `created_at` is an application-written ISO-8601
         string, so lexicographic order is chronological order and no
@@ -335,28 +351,39 @@ def get_overview(
     corpus = _Corpus()
     runs = corpus.sorted_runs()
 
+    # Every analytical aggregate below describes finished analysis, so it is
+    # scoped to terminal runs. A run still in flight -- or one abandoned before
+    # the asynchronous path existed -- keeps its place in task history with its
+    # honest status, but its partial records must not be counted as results.
+    # `active_runs_excluded` reports how many were left out so the UI can say so.
+    terminal = corpus.terminal_run_ids()
+    in_scope = lambda row: row.get("run_id") in terminal  # noqa: E731
+
+    investigations = [i for i in corpus.investigations if in_scope(i)]
+    hypotheses = [h for h in corpus.hypotheses if in_scope(h)]
+    verifications = [v for v in corpus.verifications if in_scope(v)]
+    matches = [m for m in corpus.matches if in_scope(m)]
+
     hypothesis_tally = collections.Counter(
-        h.get("status") for h in corpus.hypotheses if h.get("status")
+        h.get("status") for h in hypotheses if h.get("status")
     )
     verification_tally = collections.Counter(
-        _verification_display_state(v) for v in corpus.verifications
+        _verification_display_state(v) for v in verifications
     )
     match_tally = collections.Counter(
-        m.get("match_status") for m in corpus.matches if m.get("match_status")
+        m.get("match_status") for m in matches if m.get("match_status")
     )
     opportunity_tally = collections.Counter(
-        m.get("opportunity_id") for m in corpus.matches if m.get("opportunity_id")
+        m.get("opportunity_id") for m in matches if m.get("opportunity_id")
     )
     capability_tally = collections.Counter(
         m.get("primary_capability_id")
-        for m in corpus.matches
+        for m in matches
         if m.get("match_status") == MatchStatus.MATCHED.value
         and m.get("primary_capability_id")
     )
 
-    matched = [
-        m for m in corpus.matches if m.get("match_status") == MatchStatus.MATCHED.value
-    ]
+    matched = [m for m in matches if m.get("match_status") == MatchStatus.MATCHED.value]
     matched.sort(key=lambda m: m.get("created_at") or "", reverse=True)
     highlighted = matched[:highlights]
     businesses = _resolve_business_names({m.get("business_id", "") for m in highlighted})
@@ -373,23 +400,23 @@ def get_overview(
         # investigation, not the size of the canonical Business collection:
         # a business discovered by Market Scout but not selected was never
         # part of a run's working set.
-        businesses_discovered=len({i.get("business_id") for i in corpus.investigations}),
+        businesses_discovered=len({i.get("business_id") for i in investigations}),
         businesses_investigated=len(
             {
                 i.get("business_id")
-                for i in corpus.investigations
+                for i in investigations
                 if i.get("status") == InvestigationStatus.COMPLETED.value
             }
         ),
         # Investigator evidence only, by construction — see OverviewKpis.
-        evidence_total=sum(int(i.get("evidence_count") or 0) for i in corpus.investigations),
-        hypotheses_total=len(corpus.hypotheses),
+        evidence_total=sum(int(i.get("evidence_count") or 0) for i in investigations),
+        hypotheses_total=len(hypotheses),
         verifications_completed=sum(
             1
-            for v in corpus.verifications
+            for v in verifications
             if v.get("execution_status") == VerificationExecutionStatus.COMPLETED.value
         ),
-        matches_total=len(corpus.matches),
+        matches_total=len(matches),
         matches_matched=match_tally.get(MatchStatus.MATCHED.value, 0),
         review_needed=match_tally.get(MatchStatus.UNRESOLVED.value, 0),
     )
@@ -424,6 +451,7 @@ def get_overview(
             )
             for opportunity_id, count in opportunity_tally.most_common()
         ],
+        active_runs_excluded=len(corpus.runs) - len(terminal),
         recent_runs=[corpus.run_summary(r) for r in runs[:recent_runs]],
         highlighted_matches=[
             _match_row(m, businesses.get(m.get("business_id", ""))) for m in highlighted
