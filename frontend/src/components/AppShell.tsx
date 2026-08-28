@@ -19,7 +19,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const nav = [
     { to: "/", label: t.nav.overview, end: true, icon: IconGrid },
-    { to: "/runs", label: t.nav.runs, icon: IconRuns },
+    { to: "/tasks", label: t.nav.tasks, icon: IconRuns },
+    { to: "/team", label: t.nav.team, icon: IconTeam },
     { to: "/matches", label: t.nav.matches, icon: IconTarget },
     { to: "/businesses", label: t.nav.businesses, icon: IconBuilding },
     { to: "/catalog", label: t.nav.catalog, icon: IconBook },
@@ -208,7 +209,9 @@ function Breadcrumbs() {
   const parts = pathname.split("/").filter(Boolean);
 
   const labels: Record<string, string> = {
-    runs: t.nav.runs,
+    tasks: t.nav.tasks,
+    new: t.tasks.newTask,
+    team: t.nav.team,
     matches: t.nav.matches,
     businesses: t.nav.businesses,
     catalog: t.nav.catalog,
@@ -311,6 +314,22 @@ function IconBuilding({ className }: IconProps) {
         strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function IconTeam({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true" className={className}>
+      <circle cx="7.2" cy="7" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="14" cy="8.2" r="2" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <path
+        d="M2.6 16.4a4.6 4.6 0 0 1 9.2 0M12.9 16.4a3.6 3.6 0 0 1 4.5-3.3"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
       />
     </svg>
   );

@@ -10,20 +10,20 @@ import { useMemo, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { api, useResource } from "../lib/api";
 import { isRunLive } from "../lib/domain";
-import { formatDateTime, formatDuration, formatRelative } from "../lib/format";
 import { fitSegments, toSegments } from "../lib/segments";
 import { useStatus } from "../lib/useStatus";
 import { fill, useI18n } from "../i18n";
 import type { BusinessRow, MatchStatus } from "../lib/types";
 import { MatchesTable } from "../components/MatchesTable";
-import { PhaseTrack } from "../components/PhaseTrack";
+import { TaskActivity } from "../components/TaskActivity";
+import { TaskBrief } from "../components/TaskBrief";
+import { DEFAULT_TEMPLATE } from "../product/tasks";
 import { DataTable, PrimaryCell, type Column } from "../components/ui/DataTable";
 import { Chip, StatusBadge } from "../components/ui/StatusBadge";
 import { Distribution, MiniDistribution, ResultDonut, StatCard } from "../components/ui/metrics";
 import {
   Card,
   ExternalLink,
-  MetaItem,
   Mono,
   PageHeader,
   SectionHeading,
@@ -39,10 +39,10 @@ import {
 
 type Tab = "businesses" | "opportunities";
 
-export function RunDetailPage() {
+export function TaskDetailPage() {
   const { runId = "" } = useParams();
   const [search] = useSearchParams();
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const status = useStatus();
   // A link that carries a fit filter is asking for the opportunities tab;
   // landing on Businesses would silently drop the filter.
@@ -50,8 +50,14 @@ export function RunDetailPage() {
     search.get("status") ? "opportunities" : "businesses",
   );
 
-  const run = useResource((signal) => api.run(runId, signal), [runId], { pollMs: 15_000 });
-  const live = run.data ? isRunLive(run.data.status) : false;
+  const catalog = useResource((signal) => api.catalog(signal), []);
+  // Someone watching a task they just launched needs a faster cadence than a
+  // background dashboard; a finished task cannot change, so it stops entirely
+  // rather than re-fetching a static record forever.
+  const [live, setLive] = useState(true);
+  const run = useResource((signal) => api.run(runId, signal), [runId], {
+    pollMs: live ? 5_000 : null,
+  });
 
   const businesses = useResource(
     (signal) => api.runBusinesses(runId, signal),
@@ -61,6 +67,9 @@ export function RunDetailPage() {
     (signal) => api.matches({ runId, limit: 500 }, signal),
     [runId, live ? run.data?.matches_total : "final"],
   );
+
+  const runLive = run.data ? isRunLive(run.data.status) : true;
+  if (runLive !== live) setLive(runLive);
 
   if (run.error && !run.data) {
     return (
@@ -87,7 +96,6 @@ export function RunDetailPage() {
 
   const data = run.data;
   const totalBusinesses = data.businesses_total ?? data.investigations_total;
-  const settled = data.investigations_completed + data.investigations_failed;
   const fitCounts = {
     matches_matched: count(matches.data?.matches ?? [], "MATCHED"),
     matches_not_matched: count(matches.data?.matches ?? [], "NOT_MATCHED"),
@@ -98,7 +106,7 @@ export function RunDetailPage() {
     <>
       <PageHeader
         eyebrow={t.runDetail.eyebrow}
-        title={<span className="font-mono text-xl sm:text-2xl">{data.run_id}</span>}
+        title={t.taskTemplates[DEFAULT_TEMPLATE.id].name}
         subtitle={
           data.failure_message
             ? undefined
@@ -108,25 +116,6 @@ export function RunDetailPage() {
               })
         }
         actions={<StatusBadge meta={status.run(data.status)} live={isRunLive(data.status)} />}
-        meta={
-          <>
-            <MetaItem label={t.runDetail.meta.created}>
-              {formatDateTime(locale, data.created_at)}
-            </MetaItem>
-            <MetaItem label={t.runDetail.meta.began}>
-              {formatDateTime(locale, data.started_at)}
-            </MetaItem>
-            <MetaItem label={t.runDetail.meta.completed}>
-              {formatDateTime(locale, data.completed_at)}
-            </MetaItem>
-            <MetaItem label={t.runDetail.meta.duration}>
-              {formatDuration(data.started_at ?? data.created_at, data.completed_at)}
-            </MetaItem>
-            <MetaItem label={t.runDetail.meta.screened}>
-              {data.discovery_raw_candidate_count ?? "—"}
-            </MetaItem>
-          </>
-        }
       />
 
       {data.failure_message ? (
@@ -139,43 +128,12 @@ export function RunDetailPage() {
         </div>
       ) : null}
 
-      <Card className="mb-6">
-        <SectionHeading
-          eyebrow={t.runDetail.lifecycle.eyebrow}
-          title={t.runDetail.lifecycle.title}
-          description={t.runDetail.lifecycle.description}
-        />
-        <PhaseTrack
-          status={data.status}
-          detail={{
-            QUEUED: fill(t.runDetail.lifecycle.detail.accepted, {
-              time: formatRelative(locale, data.created_at),
-            }),
-            DISCOVERING: data.discovery_raw_candidate_count
-              ? fill(t.runDetail.lifecycle.detail.screened, {
-                  count: data.discovery_raw_candidate_count,
-                })
-              : undefined,
-            INVESTIGATING: totalBusinesses
-              ? fill(t.runDetail.lifecycle.detail.settled, {
-                  done: settled,
-                  total: totalBusinesses,
-                })
-              : undefined,
-            FINALIZING: data.verifications_total
-              ? fill(t.runDetail.lifecycle.detail.verified, {
-                  done: data.verifications_completed,
-                  total: data.verifications_total,
-                })
-              : undefined,
-            COMPLETED: data.completed_at
-              ? formatDateTime(locale, data.completed_at)
-              : undefined,
-          }}
-        />
-      </Card>
+      <div className="mb-6 space-y-6">
+        <TaskBrief run={data} execution={catalog.data?.execution ?? null} />
+        <TaskActivity run={data} />
+      </div>
 
-      <section aria-label={t.runDetail.lifecycle.title}>
+      <section aria-label={t.runDetail.kpi.opportunities}>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6">
           <StatCard
             label={t.runDetail.kpi.businesses}

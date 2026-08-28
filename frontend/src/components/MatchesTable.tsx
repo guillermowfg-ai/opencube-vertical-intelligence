@@ -11,6 +11,7 @@ import type { ReactNode } from "react";
 import { reasonCodeLabel, verificationStateOf } from "../lib/domain";
 import { useStatus } from "../lib/useStatus";
 import { fill, useI18n } from "../i18n";
+import { capabilityLabel, opportunityLabel } from "../product/labels";
 import type { MatchRow } from "../lib/types";
 import { DataTable, PrimaryCell, type Column } from "./ui/DataTable";
 import { Chip, StatusBadge } from "./ui/StatusBadge";
@@ -40,7 +41,7 @@ export function MatchesTable({
             showRun ? (
               <span className="font-mono">{match.run_id}</span>
             ) : (
-              (match.opportunity_name ?? match.opportunity_id)
+              opportunityLabel(t, match.opportunity_id, match.opportunity_name)
             )
           }
         />
@@ -54,7 +55,7 @@ export function MatchesTable({
             className: "max-w-[170px]",
             render: (match: MatchRow) => (
               <span className="text-ink">
-                {match.opportunity_name ?? match.opportunity_id}
+                {opportunityLabel(t, match.opportunity_id, match.opportunity_name)}
               </span>
             ),
           } satisfies Column<MatchRow>,
@@ -80,19 +81,22 @@ export function MatchesTable({
     {
       key: "capability",
       header: copy.capability,
-      render: (match) =>
-        match.primary_capability_label ? (
+      render: (match) => {
+        const label = capabilityLabel(
+          t,
+          match.primary_capability_id,
+          match.primary_capability_label,
+        );
+        return label ? (
           // Truncated to one line: a wrapping chip triples the row height and
           // this column is taxonomy, not the row's point.
-          <Chip
-            className="max-w-[140px]"
-            title={fill(copy.capabilityNote, { label: match.primary_capability_label })}
-          >
-            <span className="truncate">{match.primary_capability_label}</span>
+          <Chip className="max-w-[140px]" title={fill(copy.capabilityNote, { label })}>
+            <span className="truncate">{label}</span>
           </Chip>
         ) : (
           <span className="text-xs text-ink-muted">—</span>
-        ),
+        );
+      },
     },
     {
       key: "reason",

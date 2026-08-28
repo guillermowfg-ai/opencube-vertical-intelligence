@@ -13,6 +13,7 @@ import { api, useResource } from "../lib/api";
 import { reasonCodeLabel, verificationStateOf } from "../lib/domain";
 import { useStatus } from "../lib/useStatus";
 import { fill, useI18n } from "../i18n";
+import { capabilityLabel, opportunityLabel } from "../product/labels";
 import { formatConfidence, formatDateTime, hostnameOf } from "../lib/format";
 import type { EvidenceItem, MatchDetail } from "../lib/types";
 import { Badge, Chip, StatusBadge } from "../components/ui/StatusBadge";
@@ -76,7 +77,7 @@ export function MatchDetailPage() {
     <>
       <PageHeader
         eyebrow={t.matchDetail.eyebrow}
-        title={opportunity?.name ?? match.opportunity_id}
+        title={opportunityLabel(t, match.opportunity_id, opportunity?.name)}
         subtitle={
           business ? (
             <>
@@ -237,7 +238,11 @@ export function MatchDetailPage() {
                 </span>
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-ink">
-                    {data.primary_capability.label}
+                    {capabilityLabel(
+                      t,
+                      data.primary_capability.capability_id,
+                      data.primary_capability.label,
+                    )}
                   </p>
                   <Mono className="mt-1 inline-block">
                     {data.primary_capability.capability_id}
@@ -252,7 +257,9 @@ export function MatchDetailPage() {
                 <p className="eyebrow mb-2">{t.matchDetail.capability.supporting}</p>
                 <div className="flex flex-wrap gap-1.5">
                   {data.supporting_capabilities.map((capability) => (
-                    <Chip key={capability.capability_id}>{capability.label}</Chip>
+                    <Chip key={capability.capability_id}>
+                      {capabilityLabel(t, capability.capability_id, capability.label)}
+                    </Chip>
                   ))}
                 </div>
               </div>

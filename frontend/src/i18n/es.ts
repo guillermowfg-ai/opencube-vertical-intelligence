@@ -22,6 +22,8 @@ export const es: Dictionary = {
   nav: {
     overview: "Centro de mando",
     runs: "Análisis",
+    tasks: "Tareas",
+    team: "Equipo",
     matches: "Oportunidades",
     businesses: "Negocios",
     catalog: "Qué buscamos",
@@ -187,6 +189,237 @@ export const es: Dictionary = {
     },
   },
 
+  commandCenter: {
+    heroEyebrow: "OpenCube Intel",
+    heroTitle: "Tu equipo de operaciones con IA",
+    heroSubtitle:
+      "Dile a tu equipo qué investigar. Encuentran los negocios, leen lo que es público, contrastan los hallazgos importantes en otro lado y vuelven con lo que pueden demostrar.",
+    heroAction: "Nueva tarea",
+    heroSteps: {
+      task: "Tú defines la tarea",
+      team: "Tu equipo trabaja",
+      result: "Recibes evidencia",
+    },
+    activeTitle: "Trabajando ahora",
+    activeSubtitle: "Puedes cerrar esta página: el trabajo continúa.",
+    recentTitle: "Tareas recientes",
+    recentSubtitle: "Lo último que terminó tu equipo.",
+    snapshotEyebrow: "Contexto",
+    snapshotTitle: "Todo hasta ahora",
+    snapshotSubtitle:
+      "Totales de todas las tareas de este mercado. Cada número viene de algo que realmente vimos y guardamos.",
+  },
+
+  productLabels: {
+    opportunities: {
+      online_booking_friction: "Difícil reservar en línea",
+      after_hours_lead_intake: "No hay forma de contactarlos fuera de horario",
+      lead_follow_up_effectiveness: "Tardan en dar seguimiento a las consultas",
+      pbx_telephony_cost_optimization: "La telefonía cuesta más de lo necesario",
+      crm_optimization_or_replacement: "Los registros de clientes necesitan mejores herramientas",
+    },
+    capabilities: {
+      ai_lead_intake_qualification: "Recepción de consultas con IA",
+      ai_appointment_booking_assistance: "Asistente de reservas con IA",
+      ai_voice_reception_telephone_agent: "Recepción telefónica con IA",
+      missed_call_after_hours_lead_recovery: "Recuperación de llamadas perdidas y fuera de horario",
+      automated_lead_follow_up: "Seguimiento automático",
+      ai_client_concierge_faq: "Conserje de clientes con IA",
+      crm: "Registros de clientes (CRM)",
+      cloud_pbx_business_telephony: "Central telefónica en la nube",
+      workflow_automation_integrations: "Automatización de procesos",
+      website_landing_page_conversion: "Sitios web y páginas de aterrizaje",
+      omnichannel_messaging: "Mensajería en todos los canales",
+      marketing_digital_growth_enablement: "Marketing y crecimiento",
+    },
+  },
+
+  taskTemplates: {
+    market_opportunity_intelligence: {
+      name: "Investigación de oportunidades de mercado",
+      short: "Encuentra negocios a los que realmente podamos ayudar",
+      description:
+        "Encuentra negocios en un mercado, busca problemas reales que se puedan ver desde afuera, contrasta los hallazgos importantes con fuentes externas y determina dónde OpenCube realmente puede ayudar.",
+      instruction:
+        "Revisa negocios de {vertical} en {geography}. Encuentra unos {count}, busca problemas visibles en sus páginas públicas, contrasta los hallazgos importantes con fuentes externas y decide dónde OpenCube realmente puede ayudar.",
+    },
+  },
+
+  team: {
+    title: "Tu equipo",
+    kind: {
+      agent: "Agente de IA",
+      engine: "Motor de decisión",
+    },
+    kindHelp: {
+      agent: "Lee y razona sobre fuentes reales usando un modelo de lenguaje.",
+      engine:
+        "Sin modelo de lenguaje. Un conjunto fijo de reglas que da la misma respuesta ante la misma evidencia, siempre.",
+    },
+    members: {
+      market_scout: {
+        name: "Explorador de mercado",
+        role: "Encuentra los negocios adecuados para revisar.",
+        detail:
+          "Busca en el mercado por zona, descarta lo que queda fuera del área objetivo y entrega una lista corta que vale la pena investigar.",
+      },
+      business_investigator: {
+        name: "Investigador de negocios",
+        role: "Busca problemas reales que cualquiera podría ver.",
+        detail:
+          "Lee las páginas públicas de cada negocio y registra observaciones simples; nunca supone. Todo lo que concluye queda atado a algo que puede citar.",
+      },
+      verification_agent: {
+        name: "Agente de verificación",
+        role: "Contrasta los hallazgos importantes en otro lado.",
+        detail:
+          "Busca fuentes que el negocio no controla y lee lo que dicen. Un negocio nunca puede ser su propia segunda opinión.",
+      },
+      opportunity_matcher: {
+        name: "Evaluador de oportunidades",
+        role: "Decide si la evidencia se sostiene.",
+        detail:
+          "Pone la investigación y la segunda opinión lado a lado y aplica un conjunto fijo de reglas. Misma evidencia, misma respuesta: sin criterio propio, sin modelo.",
+      },
+    },
+    step: "Paso {step}",
+    usedBy: "Se usa en",
+    required: "Necesario para esta tarea",
+    requiredHelp:
+      "Esta tarea necesita todos los pasos. Saltarse uno significaría mostrarle una conclusión que nadie revisó.",
+    page: {
+      eyebrow: "Equipo",
+      title: "Tu equipo",
+      subtitle:
+        "Los especialistas que OpenCube Intel asigna a una tarea. Cada uno hace un trabajo específico, y cada resultado indica cuál de ellos lo produjo.",
+      workflowTitle: "Cómo trabajan juntos",
+      workflowSubtitle: "Cada paso entrega su trabajo al siguiente.",
+      futureTitle: "Más equipos después",
+      futureBody:
+        "Los nuevos tipos de trabajo traerán sus propios especialistas. Hoy solo existe el equipo de arriba, y nada aquí es un marcador de algo que no existe.",
+    },
+  },
+
+  newTask: {
+    eyebrow: "Nueva tarea",
+    title: "¿Qué debe hacer tu equipo?",
+    subtitle:
+      "Elige el trabajo, mira quién lo hará, revisa la configuración y empieza. Tu equipo trabaja en segundo plano: no hace falta esperar en esta pantalla.",
+    steps: {
+      choose: "Elegir el trabajo",
+      team: "Conocer al equipo",
+      configure: "Revisar la configuración",
+      review: "Empezar",
+    },
+    onlyTemplate: "Hoy hay un tipo de trabajo disponible.",
+    onlyTemplateHelp:
+      "Solo ofrecemos lo que el sistema realmente puede hacer. Aparecerán más tipos de trabajo a medida que sean reales.",
+    config: {
+      title: "Configuración de esta tarea",
+      subtitle: "Qué va a cubrir esta tarea.",
+      market: "Mercado",
+      area: "Zona",
+      businesses: "Negocios a revisar",
+      locked: "Fijo",
+      lockedHelp:
+        "Fijo en esta versión. La investigación está ajustada a este mercado y esta zona, así que cambiarlo daría resultados que no podríamos respaldar.",
+      businessesLockedHelp:
+        "Fijo en {count}. Es un límite de costo, no una configuración.",
+      capabilities: "Servicios para los que es esta tarea",
+      capabilitiesHelp:
+        "Se registra con la tarea para saber para qué se hizo. No cambia lo que revisa tu equipo: eso lo define qué buscamos.",
+      capabilitiesEmpty: "Elige al menos un servicio.",
+    },
+    instruction: {
+      title: "Qué estás pidiendo",
+      subtitle:
+        "Esto es exactamente lo que se le pedirá a tu equipo, redactado a partir de la configuración de arriba.",
+    },
+    launch: "Empezar esta tarea",
+    launching: "Empezando…",
+    launched: "Tu equipo ya está en ello",
+    launchedHelp: "Llevándote a la vista en vivo…",
+    disabled: "Iniciar tareas está desactivado en esta versión",
+    disabledHelp:
+      "Esta versión puede leer resultados anteriores, pero no puede iniciar trabajo nuevo.",
+    costNote:
+      "Empezar una tarea hace investigación real: visita sitios web reales y ejecuta análisis reales. Tarda unos minutos.",
+    error: "No se pudo iniciar tu tarea",
+  },
+
+  taskActivity: {
+    title: "Tu equipo está trabajando",
+    titleDone: "Tarea completa",
+    titleFailed: "La tarea terminó con problemas",
+    subtitle: "Puedes salir de esta página: el trabajo continúa sin ti.",
+    subtitleDone: "Esto es lo que encontró tu equipo.",
+    waiting: "En espera",
+    working: "Trabajando",
+    done: "Listo",
+    problem: "Problema",
+    memberDetail: {
+      scoutWorking: "Buscando negocios",
+      scoutDone: "{count} candidatos encontrados",
+      scoutDoneNoCount: "Negocios encontrados",
+      investigatorWorking: "{done} de {total} investigados",
+      investigatorDone: "{count} negocios investigados",
+      verifierWorking: "Contrastando hallazgos con fuentes externas",
+      verifierDone: "{count} hallazgos contrastados",
+      matcherWorking: "Sopesando la evidencia",
+      matcherDone: "{count} oportunidades evaluadas",
+      combinedNote:
+        "Contrastar y decidir ocurren juntos en un mismo paso, así que terminan a la vez.",
+    },
+    summary: {
+      title: "Qué obtuvimos",
+      candidates: "candidatos encontrados",
+      businesses: "negocios investigados",
+      opportunities: "oportunidades evaluadas",
+      goodFit: "vale la pena explorar",
+      needsPerson: "requieren una persona",
+    },
+    viewResults: "Ver los resultados",
+  },
+
+  taskBrief: {
+    title: "Resumen de la tarea",
+    subtitle: "Qué se pidió, dónde y quién hizo el trabajo.",
+    task: "Tarea",
+    instruction: "Qué se pidió",
+    market: "Mercado",
+    area: "Zona",
+    businessesRequested: "Negocios solicitados",
+    servicesRecorded: "Servicios para los que fue esta tarea",
+    teamUsed: "Equipo en esta tarea",
+    execution: "Cuándo se ejecutó",
+    started: "Empezó",
+    finished: "Terminó",
+    duration: "Duró",
+    reference: "Referencia de la tarea",
+    stillRunning: "Todavía en curso",
+  },
+
+  tasks: {
+    eyebrow: "Tu trabajo",
+    title: "Tareas",
+    subtitle:
+      "Todo lo que le has pedido a tu equipo. Cada tarea es un recorrido completo de un mercado, de principio a fin.",
+    newTask: "Nueva tarea",
+    empty: "Todavía no hay tareas",
+    emptyHelp: "Empieza tu primera tarea y tu equipo se pondrá a trabajar.",
+    card: {
+      teamMembers: "{count} en el equipo",
+      businesses: "{count} negocios",
+      completedIn: "Listo en {duration}",
+      running: "En curso ahora",
+      goodFit: "{count} vale la pena explorar",
+      needsReview: "{count} requieren una persona",
+      nothingYet: "Todavía nada evaluado",
+      viewResults: "Ver resultados",
+      reference: "Referencia",
+    },
+  },
+
   reasons: {
     CONFIRMED_NO_VERIFICATION:
       "Encontramos señales claras de esto por nuestra cuenta, y no hizo falta una segunda opinión para actuar.",
@@ -234,7 +467,7 @@ export const es: Dictionary = {
     subtitle:
       "Todo lo que hemos aprendido de este mercado. Cada número viene de algo que realmente vimos y guardamos: nada en esta página está supuesto.",
     kpi: {
-      runs: "Análisis",
+      runs: "Tareas",
       runsHintActive: "{count} en curso ahora",
       runsHintDone: "{count} terminados",
       businesses: "Negocios",
@@ -323,7 +556,7 @@ export const es: Dictionary = {
   },
 
   runDetail: {
-    eyebrow: "Análisis",
+    eyebrow: "Tarea",
     subtitle:
       "{vertical} en {geography}. Los números de abajo se cuentan de nuevo cada vez que abre esta página.",
     error: "este análisis",
@@ -336,24 +569,6 @@ export const es: Dictionary = {
       completed: "Terminó",
       duration: "Duró",
       screened: "Negocios filtrados",
-    },
-    lifecycle: {
-      eyebrow: "Avance",
-      title: "Hasta dónde llegó este análisis",
-      description: "Cada paso informa su propio estado; no lo deducimos de los números.",
-      phases: {
-        QUEUED: "En cola",
-        DISCOVERING: "Buscar negocios",
-        INVESTIGATING: "Investigar cada uno",
-        FINALIZING: "Revisar y evaluar",
-        COMPLETED: "Listo",
-      },
-      detail: {
-        accepted: "Aceptado {time}",
-        screened: "{count} filtrados",
-        settled: "{done} de {total} listos",
-        verified: "{done} de {total} revisados",
-      },
     },
     kpi: {
       businesses: "Negocios",

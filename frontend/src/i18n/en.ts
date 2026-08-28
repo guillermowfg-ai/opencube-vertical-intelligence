@@ -18,6 +18,8 @@ export const en = {
   nav: {
     overview: "Command centre",
     runs: "Analyses",
+    tasks: "Tasks",
+    team: "Team",
     matches: "Opportunities",
     businesses: "Businesses",
     catalog: "What we look for",
@@ -195,6 +197,245 @@ export const en = {
    * it is what lets the Spanish screen explain the decision in Spanish, which
    * the English-only stored sentence cannot do.
    */
+  /**
+   * Localized display labels for canonical back-end IDs.
+   *
+   * The pipeline stores English names; these map the stable ID to a label in
+   * the reader's language. Nothing here mutates a record — an unknown ID falls
+   * back to whatever the back end sent, so a new opportunity or service shows
+   * up rather than disappearing.
+   */
+  commandCenter: {
+    heroEyebrow: "OpenCube Intel",
+    heroTitle: "Your AI operations team",
+    heroSubtitle:
+      "Tell your team what to look into. They find the businesses, read what is public, check the important findings elsewhere, and come back with what they can prove.",
+    heroAction: "New task",
+    heroSteps: {
+      task: "You set the task",
+      team: "Your team works",
+      result: "You get evidence",
+    },
+    activeTitle: "Working now",
+    activeSubtitle: "You can close this page — the work carries on.",
+    recentTitle: "Recent tasks",
+    recentSubtitle: "The last few things your team finished.",
+    snapshotEyebrow: "Context",
+    snapshotTitle: "Everything so far",
+    snapshotSubtitle:
+      "Totals across every task in this market. Each number comes from something we actually saw and saved.",
+  },
+
+  productLabels: {
+    opportunities: {
+      online_booking_friction: "Hard to book online",
+      after_hours_lead_intake: "No way to reach them after hours",
+      lead_follow_up_effectiveness: "Slow to follow up on enquiries",
+      pbx_telephony_cost_optimization: "Phone system costs more than it should",
+      crm_optimization_or_replacement: "Customer records need better tooling",
+    },
+    capabilities: {
+      ai_lead_intake_qualification: "AI enquiry intake",
+      ai_appointment_booking_assistance: "AI booking assistant",
+      ai_voice_reception_telephone_agent: "AI phone reception",
+      missed_call_after_hours_lead_recovery: "Missed-call and after-hours recovery",
+      automated_lead_follow_up: "Automatic follow-up",
+      ai_client_concierge_faq: "AI client concierge",
+      crm: "Customer records (CRM)",
+      cloud_pbx_business_telephony: "Cloud phone system",
+      workflow_automation_integrations: "Workflow automation",
+      website_landing_page_conversion: "Websites and landing pages",
+      omnichannel_messaging: "All-channel messaging",
+      marketing_digital_growth_enablement: "Marketing and growth",
+    },
+  },
+
+  taskTemplates: {
+    market_opportunity_intelligence: {
+      name: "Market opportunity research",
+      short: "Find businesses we can genuinely help",
+      description:
+        "Find businesses in a market, look for real problems we can see from the outside, check the important findings against outside sources, and work out where OpenCube can genuinely help.",
+      instruction:
+        "Look at {vertical} businesses in {geography}. Find about {count} of them, look for problems visible on their public pages, check the important findings against outside sources, and decide where OpenCube can genuinely help.",
+    },
+  },
+
+  team: {
+    title: "Your team",
+    kind: {
+      agent: "AI agent",
+      engine: "Decision engine",
+    },
+    kindHelp: {
+      agent: "Reads and reasons over real sources using a language model.",
+      engine:
+        "No language model at all. A fixed set of rules that gives the same answer for the same evidence, every time.",
+    },
+    members: {
+      market_scout: {
+        name: "Market Scout",
+        role: "Finds the right businesses to look at.",
+        detail:
+          "Searches the market by neighbourhood, filters out anything outside the target area, and hands over a shortlist worth researching.",
+      },
+      business_investigator: {
+        name: "Business Investigator",
+        role: "Looks for real problems anyone could see.",
+        detail:
+          "Reads each business's own public pages and records plain observations — never guesses. Anything it concludes is tied back to something it can quote.",
+      },
+      verification_agent: {
+        name: "Verification Agent",
+        role: "Checks the important findings elsewhere.",
+        detail:
+          "Looks for sources the business does not control and reads what they say. A business can never be its own second opinion.",
+      },
+      opportunity_matcher: {
+        name: "Opportunity Matcher",
+        role: "Decides whether the evidence adds up.",
+        detail:
+          "Puts the research and the second opinion side by side and applies a fixed set of rules. Same evidence in, same answer out — no judgement calls, no model.",
+      },
+    },
+    step: "Step {step}",
+    usedBy: "Used by",
+    required: "Required for this task",
+    requiredHelp:
+      "This task needs every step. Skipping one would mean showing you a conclusion nothing checked.",
+    page: {
+      eyebrow: "Team",
+      title: "Your team",
+      subtitle:
+        "The specialists OpenCube Intel puts on a task. Each one does a specific job, and every result tells you which of them produced it.",
+      workflowTitle: "How they work together",
+      workflowSubtitle: "Each step hands its work to the next.",
+      futureTitle: "More teams later",
+      futureBody:
+        "New kinds of work will bring their own specialists. Only the team above exists today, and nothing here is a placeholder for something that does not.",
+    },
+  },
+
+  newTask: {
+    eyebrow: "New task",
+    title: "What should your team do?",
+    subtitle:
+      "Pick the work, see who will do it, check the settings, and start. Your team works in the background — you do not need to wait on this screen.",
+    steps: {
+      choose: "Choose the work",
+      team: "Meet the team",
+      configure: "Check the settings",
+      review: "Start",
+    },
+    onlyTemplate: "One kind of work is available today.",
+    onlyTemplateHelp:
+      "We only offer what the system can genuinely do. More kinds of work will appear here as they become real.",
+    config: {
+      title: "Settings for this task",
+      subtitle: "What this task will cover.",
+      market: "Market",
+      area: "Area",
+      businesses: "Businesses to look at",
+      locked: "Fixed",
+      lockedHelp:
+        "Fixed for this version. The research is tuned to this market and area, so changing it would produce results we could not stand behind.",
+      businessesLockedHelp:
+        "Fixed at {count}. This is a cost limit, not a setting.",
+      capabilities: "Services this task is for",
+      capabilitiesHelp:
+        "Recorded with the task so you know what it was run for. It does not change what your team looks at — that is set by what we look for.",
+      capabilitiesEmpty: "Choose at least one service.",
+    },
+    instruction: {
+      title: "What you are asking for",
+      subtitle:
+        "This is exactly what your team will be asked to do, written out from the settings above.",
+    },
+    launch: "Start this task",
+    launching: "Starting…",
+    launched: "Your team is on it",
+    launchedHelp: "Taking you to the live view…",
+    disabled: "Starting tasks is turned off in this build",
+    disabledHelp:
+      "This build can read past results but cannot start new work.",
+    costNote:
+      "Starting a task does real research: it visits real websites and runs real analysis. It takes a few minutes.",
+    error: "Your task could not be started",
+  },
+
+  taskActivity: {
+    title: "Your team is working",
+    titleDone: "Task complete",
+    titleFailed: "Task finished with problems",
+    subtitle: "You can leave this page — the work carries on without you.",
+    subtitleDone: "Here is what your team found.",
+    waiting: "Waiting",
+    working: "Working",
+    done: "Done",
+    problem: "Problem",
+    memberDetail: {
+      scoutWorking: "Looking for businesses",
+      scoutDone: "{count} candidates found",
+      scoutDoneNoCount: "Businesses found",
+      investigatorWorking: "{done} of {total} researched",
+      investigatorDone: "{count} businesses researched",
+      verifierWorking: "Checking findings against outside sources",
+      verifierDone: "{count} findings checked",
+      matcherWorking: "Weighing up the evidence",
+      matcherDone: "{count} opportunities assessed",
+      combinedNote:
+        "Checking and deciding happen together in one step, so they finish together.",
+    },
+    summary: {
+      title: "What came back",
+      candidates: "candidates found",
+      businesses: "businesses researched",
+      opportunities: "opportunities assessed",
+      goodFit: "worth exploring",
+      needsPerson: "need a person",
+    },
+    viewResults: "See the results",
+  },
+
+  taskBrief: {
+    title: "Task brief",
+    subtitle: "What was asked, where, and who did the work.",
+    task: "Task",
+    instruction: "What was asked",
+    market: "Market",
+    area: "Area",
+    businessesRequested: "Businesses requested",
+    servicesRecorded: "Services this task was for",
+    teamUsed: "Team on this task",
+    execution: "When it ran",
+    started: "Started",
+    finished: "Finished",
+    duration: "Took",
+    reference: "Task reference",
+    stillRunning: "Still running",
+  },
+
+  tasks: {
+    eyebrow: "Your work",
+    title: "Tasks",
+    subtitle:
+      "Everything you have asked your team to do. Each one is a full sweep of a market, start to finish.",
+    newTask: "New task",
+    empty: "No tasks yet",
+    emptyHelp: "Start your first task and your team will get to work.",
+    card: {
+      teamMembers: "{count} on the team",
+      businesses: "{count} businesses",
+      completedIn: "Done in {duration}",
+      running: "Running now",
+      goodFit: "{count} worth exploring",
+      needsReview: "{count} need a person",
+      nothingYet: "Nothing assessed yet",
+      viewResults: "See results",
+      reference: "Reference",
+    },
+  },
+
   reasons: {
     CONFIRMED_NO_VERIFICATION:
       "We found solid signs of this ourselves, and no second opinion was needed to act on it.",
@@ -242,7 +483,7 @@ export const en = {
     subtitle:
       "Everything we have learned about this market. Every number here comes from something we actually saw and saved — nothing on this page is guessed.",
     kpi: {
-      runs: "Analyses",
+      runs: "Tasks",
       runsHintActive: "{count} running now",
       runsHintDone: "{count} finished",
       businesses: "Businesses",
@@ -329,7 +570,7 @@ export const en = {
   },
 
   runDetail: {
-    eyebrow: "Analysis",
+    eyebrow: "Task",
     subtitle:
       "{vertical} in {geography}. The numbers below are counted fresh every time you open this page.",
     error: "this analysis",
@@ -342,24 +583,6 @@ export const en = {
       completed: "Finished",
       duration: "Took",
       screened: "Businesses screened",
-    },
-    lifecycle: {
-      eyebrow: "Progress",
-      title: "How far this analysis got",
-      description: "Each step reports its own state — we do not guess it from the numbers.",
-      phases: {
-        QUEUED: "Queued",
-        DISCOVERING: "Find businesses",
-        INVESTIGATING: "Research each one",
-        FINALIZING: "Check and match",
-        COMPLETED: "Done",
-      },
-      detail: {
-        accepted: "Accepted {time}",
-        screened: "{count} screened",
-        settled: "{done} of {total} done",
-        verified: "{done} of {total} checked",
-      },
     },
     kpi: {
       businesses: "Businesses",

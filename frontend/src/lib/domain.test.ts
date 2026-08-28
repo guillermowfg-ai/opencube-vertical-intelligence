@@ -7,7 +7,6 @@ import {
   compareTone,
   isRunLive,
   reasonCodeLabel,
-  runPhaseStates,
   verificationStateOf,
   type Tone,
 } from "./domain";
@@ -97,29 +96,6 @@ describe("status colours", () => {
       expect(classes.stroke).toBe(classes.fill.replace("bg-", "stroke-"));
       expect(tone.length).toBeGreaterThan(0);
     }
-  });
-});
-
-describe("runPhaseStates", () => {
-  it("walks the spine as the analysis advances", () => {
-    expect(runPhaseStates("QUEUED").QUEUED).toBe("active");
-    expect(runPhaseStates("INVESTIGATING").DISCOVERING).toBe("done");
-    expect(runPhaseStates("INVESTIGATING").FINALIZING).toBe("pending");
-    // A finished analysis has no phase still running.
-    expect(runPhaseStates("COMPLETED").COMPLETED).toBe("done");
-    expect(runPhaseStates("COMPLETED").FINALIZING).toBe("done");
-  });
-
-  it("does not draw an analysis that ended with errors as if it stopped early", () => {
-    const states = runPhaseStates("FAILED");
-    expect(states.INVESTIGATING).toBe("done");
-    expect(states.FINALIZING).toBe("done");
-    expect(states.COMPLETED).toBe("failed");
-  });
-
-  it("keeps the pre-async statuses readable", () => {
-    expect(runPhaseStates("IN_PROGRESS").INVESTIGATING).toBe("active");
-    expect(runPhaseStates("CREATED").QUEUED).toBe("active");
   });
 });
 

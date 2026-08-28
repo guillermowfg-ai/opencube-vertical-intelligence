@@ -12,12 +12,14 @@ import { isRunLive } from "../lib/domain";
 import { toSegments } from "../lib/segments";
 import { useStatus } from "../lib/useStatus";
 import { fill, useI18n } from "../i18n";
+import { capabilityLabel, opportunityLabel } from "../product/labels";
 import { formatDateTime, formatRelative, shortId } from "../lib/format";
-import type { RunSummary } from "../lib/types";
-import { RunsTable } from "../components/RunsTable";
+import { TaskCard } from "../components/TaskCard";
+import { NewTaskButton } from "../components/NewTaskButton";
+import { canLaunchTasks } from "../product/mode";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { Distribution, RankedBars, ResultDonut, StatCard } from "../components/ui/metrics";
-import { Card, PageHeader, SectionHeading } from "../components/ui/primitives";
+import { Card, SectionHeading } from "../components/ui/primitives";
 import { cx } from "../lib/cx";
 import {
   EmptyState,
@@ -27,7 +29,7 @@ import {
   SkeletonRows,
 } from "../components/ui/states";
 
-export function OverviewPage() {
+export function CommandCenterPage() {
   const { t } = useI18n();
   const status = useStatus();
   const { data, error, loading, refreshing, reload } = useResource(
@@ -39,7 +41,7 @@ export function OverviewPage() {
   if (error && !data) {
     return (
       <>
-        <OverviewHeader generatedAt={null} refreshing={false} />
+        <TaskLauncher generatedAt={null} refreshing={false} />
         <ErrorState error={error} onRetry={reload} context={t.overview.error} />
       </>
     );
@@ -48,7 +50,7 @@ export function OverviewPage() {
   if (loading || !data) {
     return (
       <>
-        <OverviewHeader generatedAt={null} refreshing={false} />
+        <TaskLauncher generatedAt={null} refreshing={false} />
         <SkeletonCards count={6} />
         <div className="mt-8 grid gap-6 xl:grid-cols-3">
           <SkeletonPanel />
@@ -63,13 +65,62 @@ export function OverviewPage() {
   }
 
   const { kpis } = data;
-  const liveRun = data.recent_runs.find((run) => isRunLive(run.status));
+  const activeRuns = data.recent_runs.filter((run) => isRunLive(run.status));
+  const recentRuns = data.recent_runs.filter((run) => !isRunLive(run.status)).slice(0, 2);
 
   return (
     <>
-      <OverviewHeader generatedAt={data.generated_at} refreshing={refreshing} />
+      <TaskLauncher generatedAt={data.generated_at} refreshing={refreshing} />
 
-      {liveRun ? <LiveRunBanner run={liveRun} /> : null}
+      {activeRuns.length > 0 ? (
+        <section className="mb-6" aria-label={t.commandCenter.activeTitle}>
+          <SectionHeading
+            title={t.commandCenter.activeTitle}
+            description={t.commandCenter.activeSubtitle}
+          />
+          <div className="grid items-start gap-4 lg:grid-cols-2">
+            {activeRuns.map((run) => (
+              <TaskCard key={run.run_id} run={run} />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      <section className="mb-8" aria-label={t.commandCenter.recentTitle}>
+        <SectionHeading
+          title={t.commandCenter.recentTitle}
+          description={t.commandCenter.recentSubtitle}
+          action={
+            <Link
+              to="/tasks"
+              className="text-sm font-medium text-brand-600 transition hover:text-brand-700"
+            >
+              {t.common.viewAll} →
+            </Link>
+          }
+        />
+        {recentRuns.length === 0 ? (
+          <Card>
+            <EmptyState
+              compact
+              title={t.tasks.empty}
+              description={canLaunchTasks ? t.tasks.emptyHelp : t.runs.emptyHelp}
+            />
+          </Card>
+        ) : (
+          <div className="grid items-start gap-4 lg:grid-cols-2">
+            {recentRuns.map((run) => (
+              <TaskCard key={run.run_id} run={run} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      <SectionHeading
+        eyebrow={t.commandCenter.snapshotEyebrow}
+        title={t.commandCenter.snapshotTitle}
+        description={t.commandCenter.snapshotSubtitle}
+      />
 
       <section aria-label={t.overview.title}>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6">
@@ -186,11 +237,18 @@ export function OverviewPage() {
                         {match.business_display_name ?? match.business_id}
                       </p>
                       <p className="mt-0.5 truncate text-sm text-ink-soft">
-                        {match.opportunity_name ?? match.opportunity_id}
+                        {opportunityLabel(t, match.opportunity_id, match.opportunity_name)}
                       </p>
                       <p className="mt-1.5 truncate text-xs text-ink-muted">
                         {match.primary_capability_label ? (
-                          <>{match.primary_capability_label} · </>
+                          <>
+                            {capabilityLabel(
+                              t,
+                              match.primary_capability_id,
+                              match.primary_capability_label,
+                            )}{" "}
+                            ·{" "}
+                          </>
                         ) : null}
                         {/* The analysis is what separates two otherwise
                             identical rows: the same business can be a good fit
@@ -216,7 +274,10 @@ export function OverviewPage() {
               description={t.overview.capability.description}
             />
             <RankedBars
-              items={data.matched_capability_counts}
+              items={data.matched_capability_counts.map((item) => ({
+                ...item,
+                label: capabilityLabel(t, item.key, item.label) ?? item.label,
+              }))}
               emptyMessage={t.overview.capability.empty}
             />
           </Card>
@@ -227,7 +288,10 @@ export function OverviewPage() {
               description={t.overview.coverage.description}
             />
             <RankedBars
-              items={data.opportunity_counts}
+              items={data.opportunity_counts.map((item) => ({
+                ...item,
+                label: opportunityLabel(t, item.key, item.label),
+              }))}
               fill="bg-slate-300"
               emptyMessage={t.overview.coverage.empty}
             />
@@ -235,37 +299,15 @@ export function OverviewPage() {
         </div>
       </section>
 
-      <section className="mt-6">
-        <Card>
-          <SectionHeading
-            title={t.overview.recent.title}
-            description={t.overview.recent.description}
-            action={
-              <Link
-                to="/runs"
-                className="text-sm font-medium text-brand-600 transition hover:text-brand-700"
-              >
-                {t.common.viewAll} →
-              </Link>
-            }
-          />
-          <RunsTable
-            runs={data.recent_runs}
-            empty={
-              <EmptyState
-                compact
-                title={t.overview.recent.empty}
-                description={t.overview.recent.emptyHelp}
-              />
-            }
-          />
-        </Card>
-      </section>
     </>
   );
 }
 
-function OverviewHeader({
+/**
+ * The product's opening statement: what this is, and the one action that
+ * starts it. Task -> Team -> Result, said in three words each.
+ */
+function TaskLauncher({
   generatedAt,
   refreshing,
 }: {
@@ -273,76 +315,65 @@ function OverviewHeader({
   refreshing: boolean;
 }) {
   const { t, locale } = useI18n();
-  return (
-    <PageHeader
-      eyebrow={t.overview.eyebrow}
-      title={t.overview.title}
-      subtitle={t.overview.subtitle}
-      actions={
-        generatedAt ? (
-          <span
-            className={cx(
-              "inline-flex items-center gap-2 rounded-full border border-hairline bg-surface px-3 py-1.5 text-xs font-medium transition-colors",
-              refreshing ? "text-cyan-700" : "text-ink-muted",
-            )}
-            title={formatDateTime(locale, generatedAt)}
-          >
-            <span
-              aria-hidden="true"
-              className={cx(
-                "size-1.5 rounded-full",
-                refreshing ? "live-dot bg-cyan-600" : "bg-slate-400",
-              )}
-            />
-            {refreshing
-              ? t.common.refreshing
-              : fill(t.common.updated, { time: formatRelative(locale, generatedAt) })}
-          </span>
-        ) : undefined
-      }
-    />
-  );
-}
-
-function LiveRunBanner({ run }: { run: RunSummary }) {
-  const { t, locale } = useI18n();
-  const status = useStatus();
-  const done = run.investigations_completed + run.investigations_failed;
-  const total = run.businesses_total ?? run.investigations_total;
+  const copy = t.commandCenter;
 
   return (
-    <Link
-      to={`/runs/${encodeURIComponent(run.run_id)}`}
-      className="card hover-lift mb-6 flex flex-wrap items-center gap-x-6 gap-y-3 border-brand-200 bg-brand-50/40 p-4 sm:p-5"
-    >
-      <div className="flex min-w-0 flex-1 items-center gap-3">
-        <StatusBadge meta={status.run(run.status)} live />
-        <div className="min-w-0">
-          <p className="truncate font-mono text-sm font-medium text-ink">{run.run_id}</p>
-          <p className="truncate text-xs text-ink-soft">
-            {run.vertical} · {run.geography} ·{" "}
-            {/* The age is the point, not decoration: an analysis the back end
-                still reports as unfinished may have been sitting that way for
-                days. Showing when it started lets someone see that without the
-                interface inventing a status the pipeline never wrote. */}
-            <span title={formatDateTime(locale, run.created_at)}>
-              {fill(t.common.startedRelative, {
-                time: formatRelative(locale, run.created_at),
-              })}
-            </span>
+    <section className="card relative mb-8 overflow-hidden p-6 sm:p-8">
+      <span
+        aria-hidden="true"
+        className="lattice pointer-events-none absolute inset-y-0 right-0 hidden w-1/2 [mask-image:linear-gradient(to_left,black,transparent)] sm:block"
+      />
+      <div className="relative flex flex-wrap items-end justify-between gap-6">
+        <div className="min-w-0 max-w-2xl">
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="eyebrow">{copy.heroEyebrow}</p>
+            {generatedAt ? (
+              <span
+                className={cx(
+                  "inline-flex items-center gap-2 text-xs font-medium",
+                  refreshing ? "text-cyan-700" : "text-ink-muted",
+                )}
+                title={formatDateTime(locale, generatedAt)}
+              >
+                <span
+                  aria-hidden="true"
+                  className={cx(
+                    "size-1.5 rounded-full",
+                    refreshing ? "live-dot bg-cyan-600" : "bg-slate-400",
+                  )}
+                />
+                {refreshing
+                  ? t.common.refreshing
+                  : fill(t.common.updated, { time: formatRelative(locale, generatedAt) })}
+              </span>
+            ) : null}
+          </div>
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-ink sm:text-[1.75rem]">
+            {copy.heroTitle}
+          </h2>
+          <p className="mt-2 text-[0.9375rem] leading-relaxed text-ink-soft">
+            {copy.heroSubtitle}
           </p>
+
+          <ol className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
+            {[copy.heroSteps.task, copy.heroSteps.team, copy.heroSteps.result].map(
+              (step, index) => (
+                <li key={step} className="flex items-center gap-3">
+                  {index > 0 ? (
+                    <span aria-hidden="true" className="text-brand-400">
+                      →
+                    </span>
+                  ) : null}
+                  <span className="font-medium text-ink">{step}</span>
+                </li>
+              ),
+            )}
+          </ol>
         </div>
+
+        {canLaunchTasks ? <NewTaskButton label={copy.heroAction} /> : null}
       </div>
-      <div className="numerals flex items-center gap-6 text-sm">
-        <span className="text-ink-soft">
-          <span className="font-semibold text-ink">
-            {done}
-            {total ? `/${total}` : ""}
-          </span>{" "}
-          {t.runDetail.kpi.businesses.toLowerCase()}
-        </span>
-      </div>
-      <span className="text-sm font-medium text-brand-600">{t.common.openRun} →</span>
-    </Link>
+    </section>
   );
 }
+

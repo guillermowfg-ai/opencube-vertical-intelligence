@@ -349,11 +349,38 @@ export interface BusinessListResponse {
   truncated: boolean;
 }
 
+/** Exactly what `POST /runs` accepts, published by the back end so the UI
+ * never renders a control the API would reject. */
+export interface ExecutionParameters {
+  vertical: string;
+  vertical_locked: boolean;
+  geography: string;
+  geography_locked: boolean;
+  target_business_count: number;
+  target_business_count_locked: boolean;
+  provider_capabilities_editable: boolean;
+  provider_capabilities_max: number;
+  /** False today: the value is recorded on the task but no engine reads it. */
+  provider_capabilities_affect_analysis: boolean;
+}
+
 export interface CatalogResponse {
   vertical: string;
   geography: string;
   default_provider_capabilities: string[];
+  execution: ExecutionParameters;
   evaluated_opportunity_ids: string[];
   opportunities: OpportunityDefinition[];
   capabilities: Capability[];
+}
+
+/** `POST /runs` -- the product's only write. */
+export interface CreateTaskRequest {
+  provider_capabilities?: string[];
+}
+
+export interface CreateTaskResponse {
+  run_id: string;
+  status: RunStatus;
+  created_at: string;
 }

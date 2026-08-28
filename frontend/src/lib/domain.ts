@@ -167,51 +167,6 @@ export const EVIDENCE_ROLE_TONE: Record<string, Tone> = {
   INDEPENDENT: "info",
 };
 
-export const RUN_PHASES = [
-  "QUEUED",
-  "DISCOVERING",
-  "INVESTIGATING",
-  "FINALIZING",
-  "COMPLETED",
-] as const;
-
-export type RunPhase = (typeof RUN_PHASES)[number];
-export type PhaseState = "done" | "active" | "pending" | "failed";
-
-/**
- * Positions an analysis on the Find -> Research -> Check -> Match spine.
- * Purely presentational ordering of a status the back end set; it never infers
- * a phase the analysis did not report.
- */
-export function runPhaseStates(status: RunStatus): Record<RunPhase, PhaseState> {
-  const legacyIndex: Partial<Record<RunStatus, number>> = {
-    CREATED: 0,
-    IN_PROGRESS: 2,
-  };
-  const current = legacyIndex[status] ?? RUN_PHASES.indexOf(status as RunPhase);
-  const failed = status === "FAILED";
-  const terminal = status === "COMPLETED";
-
-  const states = {} as Record<RunPhase, PhaseState>;
-  RUN_PHASES.forEach((phase, index) => {
-    if (failed) {
-      states[phase] = phase === "COMPLETED" ? "failed" : "done";
-      return;
-    }
-    if (current < 0) {
-      states[phase] = "pending";
-      return;
-    }
-    states[phase] =
-      index < current || (terminal && index <= current)
-        ? "done"
-        : index === current
-          ? "active"
-          : "pending";
-  });
-  return states;
-}
-
 export function isRunLive(status: RunStatus): boolean {
   return status !== "COMPLETED" && status !== "FAILED";
 }

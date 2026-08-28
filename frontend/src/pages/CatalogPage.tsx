@@ -7,6 +7,7 @@
 
 import { api, useResource } from "../lib/api";
 import { useI18n } from "../i18n";
+import { capabilityLabel, opportunityLabel } from "../product/labels";
 import { Chip } from "../components/ui/StatusBadge";
 import { Card, PageHeader, SectionHeading } from "../components/ui/primitives";
 import { cx } from "../lib/cx";
@@ -58,7 +59,7 @@ export function CatalogPage() {
                   className={cx(!evaluated && "opacity-75")}
                 >
                   <SectionHeading
-                    title={opportunity.name}
+                    title={opportunityLabel(t, opportunity.opportunity_id, opportunity.name)}
                     description={opportunity.description}
                     action={
                       <Chip
@@ -100,7 +101,9 @@ export function CatalogPage() {
               <ul className="divide-y divide-hairline">
                 {data.capabilities.map((capability) => (
                   <li key={capability.capability_id} className="py-2.5 first:pt-0 last:pb-0">
-                    <p className="text-sm text-ink">{capability.label}</p>
+                    <p className="text-sm text-ink">
+                      {capabilityLabel(t, capability.capability_id, capability.label)}
+                    </p>
                   </li>
                 ))}
               </ul>

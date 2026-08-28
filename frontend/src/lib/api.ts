@@ -1,15 +1,20 @@
 /**
- * The one place this app talks to the backend.
+ * The one place this app talks to the back end.
  *
- * Read-only by construction: there is no POST helper here. Creating a run is
- * an authenticated, cost-bearing operation and stays off the browser surface
- * for this milestone (DECISIONS.md #11 / #32).
+ * Every route here is a read except `createTask`, which is the product's only
+ * write. It posts to the public product route `POST /runs`; the internal
+ * `/tasks/*` Cloud Tasks handlers are never referenced from browser code and
+ * a test asserts that. `createTask` refuses outright unless Product Mode is
+ * on, so a future read-only build cannot launch anything by accident.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { canLaunchTasks } from "../product/mode";
 import type {
   BusinessListResponse,
   CatalogResponse,
+  CreateTaskRequest,
+  CreateTaskResponse,
   MatchDetail,
   MatchListResponse,
   MatchStatus,
@@ -54,12 +59,21 @@ function query(params: Record<string, string | number | undefined | null>): stri
   return encoded ? `?${encoded}` : "";
 }
 
-async function request<T>(path: string, signal?: AbortSignal): Promise<T> {
+async function request<T>(
+  path: string,
+  signal?: AbortSignal,
+  init?: RequestInit,
+): Promise<T> {
   let response: Response;
   try {
     response = await fetch(`${API_BASE}${path}`, {
+      ...init,
       signal,
-      headers: { Accept: "application/json" },
+      headers: {
+        Accept: "application/json",
+        ...(init?.body ? { "Content-Type": "application/json" } : {}),
+        ...init?.headers,
+      },
     });
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") throw error;
@@ -120,6 +134,28 @@ export const api = {
     request<BusinessListResponse>(`/businesses`, signal),
 
   catalog: (signal?: AbortSignal) => request<CatalogResponse>(`/catalog`, signal),
+
+  /**
+   * Launch a task. The product's only write, and the only cost-bearing call
+   * in the app -- it enqueues real discovery and real model work.
+   *
+   * `provider_capabilities` is the sole field `CreateRunRequest` accepts
+   * beyond the frozen vertical and geography, so nothing else is sent. Vertical
+   * and geography are deliberately omitted rather than echoed back: the API
+   * treats a mismatch as a 422, and sending values we did not let the user
+   * choose would only create a way to get that wrong.
+   */
+  createTask: (body: CreateTaskRequest, signal?: AbortSignal) => {
+    if (!canLaunchTasks) {
+      return Promise.reject(
+        new ApiError(0, "Launching tasks is disabled in this build.", null),
+      );
+    }
+    return request<CreateTaskResponse>(`/runs`, signal, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
 };
 
 export interface Resource<T> {
