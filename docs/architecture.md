@@ -37,7 +37,7 @@ flowchart TB
         API["FastAPI product API<br/><i>on Google ADK</i>"]
         RUN["Cloud Run — opencube-intel<br/><i>us-east1 · private</i>"]
         TASKS["Cloud Tasks — opencube-intel-runs<br/><i>max 5 concurrent · OIDC</i>"]
-        GEMINI["Gemini on Vertex AI"]
+        GEMINI["Gemini on Vertex AI<br/><i>via Google Gen AI SDK</i>"]
         PLACES["Places API (New)"]
     end
 
@@ -114,6 +114,14 @@ Opportunity Matcher over *every* hypothesis, and writes the terminal Run state.
 ---
 
 ## 4. The four specialists
+
+Three of them reason with a model; the fourth does not. The three that do are
+built on the **Google Gen AI SDK** (`google-genai`), calling Gemini through
+Vertex AI with response schemas — they are not ADK `Agent` instances. ADK is the
+layer beneath them: the FastAPI application they are served from, its runner and
+session services, and its Cloud Trace export. The ADK scaffold's sample
+`root_agent` in `app/agent.py` is retained as generated and takes no part in a
+production run.
 
 ### 1 · Market Scout — AI agent
 Discovers real businesses through the Places API (New) and filters them
@@ -281,7 +289,7 @@ access control.
 
 One Cloud Run service, one deployment, one identity. The public product API
 (`/runs`), the internal Cloud Tasks handlers (`/tasks/*`) and the read-only
-frontend projections are all served by the same ADK application. None of these
+frontend projections are all served by the same ADK FastAPI application. None of these
 paths collide with the ADK-provided routes — in particular ADK's
 agent-invocation route is `POST /run`, which is distinct from `POST /runs`.
 

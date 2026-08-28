@@ -19,8 +19,10 @@ Don't personalize outreach first — prove there's a reason to reach out.
 
 An autonomous intelligence team that investigates local businesses, verifies its
 own findings against independent sources, and deterministically rejects
-unsupported reasons to contact them. In its production run it rejected 27 of 30
-possible outreach reasons. "Do not contact" is a successful outcome.
+unsupported reasons to contact them. Built on the Google Gen AI SDK with Gemini
+on Vertex AI, served from a Google ADK application on Cloud Run. In its
+production run it rejected 27 of 30 possible outreach reasons. "Do not contact"
+is a successful outcome.
 
 ## Category
 
@@ -105,20 +107,31 @@ finalize task. Firestore is the canonical workflow state — nothing in the
 asynchronous path touches in-memory session state, so any instance can serve any
 task and an instance dying loses nothing.
 
-**Gemini on Vertex AI** does the reasoning, always schema-constrained, always
-over source material explicitly supplied to it. Verification uses Google Search
-grounding for source *discovery* only — its prose is never persisted as evidence
-— and reasons in a second, separate call over independently fetched material.
-Every source URL a model emits is validated downstream against the URLs actually
-fetched, so a fabricated citation can't reach the record.
+**Two Google agent frameworks, at two layers.** The analytical specialists —
+Market Scout, Business Investigator, Verification Agent — are built on the
+**Google Gen AI SDK** (`google-genai`), calling Gemini through **Vertex AI**
+with response schemas constraining every output. The Gen AI SDK is one of the
+hackathon's accepted Google agent frameworks. **Google ADK** is the application
+and runtime layer: the project was scaffolded with `google-agents-cli`, and the
+service runs as an ADK FastAPI application with ADK's runner, session and
+artifact services and its Cloud Trace export. The ADK scaffold's sample
+`root_agent` in `app/agent.py` was kept as generated and is not part of the
+production analytical workflow.
 
-**The Matcher makes zero model calls.** Reconciliation is a fixed lookup over
+Gemini reasons only over source material explicitly supplied to it. Verification
+uses Google Search grounding for source *discovery* only — its prose is never
+persisted as evidence — and reasons in a second, separate call over
+independently fetched material. Every source URL a model emits is validated
+downstream against the URLs actually fetched, so a fabricated citation can't
+reach the record.
+
+**The Matcher makes zero model calls — neither SDK reaches it.** Reconciliation is a fixed lookup over
 `(investigator status × verification state)`, auditable line by line. It writes
 only to its own collection, creates no evidence, and never mutates upstream
 state — enforced by a test that asserts this structurally via AST rather than by
 convention.
 
-**Stack:** Python 3.12, FastAPI, Pydantic, Google ADK, `google-genai`, Cloud Run,
+**Stack:** Python 3.12, FastAPI, Pydantic, Google Gen AI SDK, Google ADK, Cloud Run,
 Cloud Tasks, Firestore (Native mode), Places API (New), IAM/OIDC · React 19,
 TypeScript, Vite, Tailwind CSS v4 · pytest, Vitest, ruff, uv.
 
@@ -247,20 +260,21 @@ results with their complete evidence chains.
 practice whose prospecting friction this product addresses, and the source of the
 logo asset. The brand context predates the hackathon.
 
-**OpenCube Intel — this project, this repository, and everything submitted — was
-designed and built during the hackathon submission period.** The commit history
-is public: initial commit 23 August 2026, 26 commits, no pre-existing application
-code imported.
+**OpenCube Intel — this repository, this codebase and the submitted
+implementation — was designed and built during the hackathon submission
+period**, evidenced by the repository's Git history: initial commit 23 August
+2026, 26 commits, no pre-existing application code imported.
 
-Standard open-source libraries and frameworks were used as dependencies (Google
-ADK, `google-genai`, FastAPI, Pydantic, React, Vite, Tailwind). The project was
-scaffolded with Google's `agents-cli` (v1.4.0), and its generated files — the
-retained Terraform and the ADK scaffold's sample agent — are identifiable as such
-in the history. AI coding assistants were used throughout development.
+Standard open-source libraries and frameworks were used as dependencies (the
+Google Gen AI SDK, Google ADK, FastAPI, Pydantic, React, Vite, Tailwind). The
+project was scaffolded with Google's `agents-cli` (v1.4.0), and its generated
+files — the retained Terraform and the ADK scaffold's sample agent — are
+identifiable as such in the Git history. AI coding assistants were used
+throughout development.
 
 ## Built with
 
-`google-adk` · `gemini` · `vertex-ai` · `google-cloud-run` · `google-cloud-tasks`
+`google-genai` · `google-adk` · `gemini` · `vertex-ai` · `google-cloud-run` · `google-cloud-tasks`
 · `firestore` · `google-places-api` · `python` · `fastapi` · `pydantic` ·
 `react` · `typescript` · `vite` · `tailwindcss`
 

@@ -61,7 +61,7 @@
     <text class="ff box-title" x="148" y="314">Cloud Run</text>
     <text class="ff box-sub" x="148" y="334">opencube-intel · us-east1</text>
     <text class="ff box-sub" x="148" y="352">FastAPI product API</text>
-    <text class="ff box-sub" x="148" y="370">on Google ADK</text>
+    <text class="ff box-sub" x="148" y="370">ADK application layer</text>
     <text class="ff box-kind" x="148" y="390">PRIVATE — NO allUsers</text>
   </g>
 
@@ -77,7 +77,7 @@
   <g>
     <rect x="650" y="288" width="240" height="114" rx="10" fill="#FFFFFF" stroke="#C7D4E8"/>
     <text class="ff box-title" x="668" y="314">Vertex AI</text>
-    <text class="ff box-sub" x="668" y="334">Gemini</text>
+    <text class="ff box-sub" x="668" y="334">Gemini · Google Gen AI SDK</text>
     <text class="ff box-sub" x="668" y="352">schema-constrained output</text>
     <text class="ff box-sub" x="668" y="370">+ Google Search grounding</text>
     <text class="ff box-kind" x="668" y="390">CALLED BY AGENTS 2 &amp; 3</text>

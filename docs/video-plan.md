@@ -10,43 +10,48 @@ yet.**
 
 ---
 
-## The timing problem, and how to solve it honestly
+## Frozen video strategy
 
-The accepted production run took **≈3m54s** end to end. The video must be under
-4:00. You therefore cannot show a real run at 1× and show anything else.
+The video is two clearly separated halves. This is decided — not an option list.
 
-**The fix:** record the execution as **one continuous, unbroken take** from
-`Launch` to `COMPLETED`, then **uniformly speed that single clip up** in the
-edit. A constant-rate speed-up of one uninterrupted take is still a recording of
-a real execution — nothing is removed, nothing is reordered, and the viewer can
-see the clock advance. Label it on screen (`3× speed`) and say so in narration.
+### A · Fresh live run
 
-**What does not qualify as live proof:** cutting from "launching…" to "done!",
-splicing two takes together, or dropping the waiting sections. If the execution
-segment is spliced, stop calling it live proof and present it as a recap
-instead.
+Launch **one new real task** and record it as **one continuous, uncut take**
+from `Launch` through `COMPLETED`. Uniform playback speed-up of approximately
+**3×** is permitted for that continuous run, and nothing else about it may be
+altered.
 
-The storyboard below allocates **1:20 of screen time** to the execution clip.
-At ≈3m54s of real time that is a **≈2.9× uniform speed-up** — round to 3× and
-let the clip end a few seconds early.
+Carry this label on screen for the entire clip:
 
-### Decision needed before recording
+> **3× playback — continuous uncut production run**
 
-A fresh live run produces fresh numbers, which will not be the accepted run's
-40 / 10 / 30 / 2 / 27 / 1. Two workable options:
+Show the real **Cloud Run** and **Cloud Tasks** proof *during* this execution:
+the private service and its revision, the `opencube-intel-runs` queue, and the
+Cloud Run logs showing SCOUT, the ten parallel `/tasks/investigate` calls and
+the single `/tasks/finalize`.
 
-1. **Recommended.** Record the live execution as a new run, then — in the same
-   continuous session — navigate to the accepted run
-   `5fc062f1-3f5c-46ae-8f7f-9981ab11b669` in the task list for the results and
-   evidence sections. Both are real, both are on screen, and the transition is
-   visible and honest ("here is the run I documented"). No number is ever
-   misattributed.
-2. Record a new run and adopt *its* figures everywhere — README,
-   `architecture.md`, Devpost, narration. More work, and it discards the
-   already-audited run.
+**Disqualifying edits.** Cutting from "launching…" to "done!", splicing two
+takes, or dropping the waiting sections. Any of those and it is no longer live
+proof — present it as a recap and stop calling it one.
 
-Do not mix: never narrate the accepted run's counts over a different run's
-screen.
+The accepted run took ≈3m54s, so at 3× the storyboard's 1:20 window covers a
+fresh run of comparable length with a few seconds to spare.
+
+### B · Results walkthrough
+
+After the live run finishes, **visibly transition** — on camera, through the
+task list — to the accepted production run:
+
+> `5fc062f1-3f5c-46ae-8f7f-9981ab11b669`
+
+Say explicitly, in narration, that this is a **previously completed real
+production run, selected for its auditable evidence trail**. Never imply it is
+the run just recorded, and never narrate its counts over the fresh run's screen.
+
+Use it to show **30 evaluated · 27 rejected · 2 worth exploring · 1 needs
+review**, then open **No Filter Medical Spa → "Hard to book online"** and walk
+the chain: own-site evidence → outside-source evidence → contradiction →
+deterministic decision → **DO NOT CONTACT ON THIS BASIS**.
 
 ---
 
@@ -95,9 +100,10 @@ Continue through Task configuration and the written-out instruction.
 
 ### 0:50 – 2:10 · Launch and background execution *(the continuous clip)*
 
-**On screen:** press **Start this task**. Then the live activity view for the
-whole run, uniformly sped up. Show the `3× speed` badge from the first frame of
-the clip.
+**On screen:** press **Start this task** on a **fresh, new run**. Then the live
+activity view for the whole run, uniformly sped up. Carry the label
+**`3× playback — continuous uncut production run`** from the first frame of the
+clip to the last.
 
 > "I press start, and the browser is done — the API returns in about a third of
 > a second. Nothing analytical happens on that request.
@@ -125,16 +131,23 @@ proof, so it can be its own clip:
 Return to the live activity view for the remainder of the clip, through
 `COMPLETED`.
 
-> "Three minutes fifty-four, start to finish."
+> "Start to finish, about four minutes — and I didn't touch it once."
+
+*(State the fresh run's actual duration here, not the accepted run's 3m54s.)*
 
 ---
 
 ### 2:10 – 3:05 · Results — 27 of 30 rejected
 
-**On screen:** the completed task's results. Land hard on the rejection
-headline.
+**On screen:** from the finished live run, **navigate visibly through the task
+list** to the accepted production run
+`5fc062f1-3f5c-46ae-8f7f-9981ab11b669`. The transition must be on camera. Then
+land hard on its rejection headline.
 
-> "Ten businesses. Thirty possible reasons to reach out.
+> "Now let me open a run I finished earlier — a real production run I picked
+> because its evidence trail is fully auditable.
+>
+> Ten businesses. Thirty possible reasons to reach out.
 >
 > Two are worth exploring. One needs a person to look at it. **Twenty-seven were
 > rejected.**
@@ -155,8 +168,8 @@ what our research found, what an outside source said, and whether we can act.
 
 ### 3:05 – 3:40 · One rejection, all the way down
 
-**On screen:** open **No Filter Medical Spa → "Hard to book online"** and walk
-the evidence chain top to bottom.
+**On screen:** still inside the accepted run, open **No Filter Medical Spa →
+"Hard to book online"** and walk the evidence chain top to bottom.
 
 > "Here's one. We thought this business might be hard to book with online.
 >
@@ -180,9 +193,9 @@ the evidence chain top to bottom.
 
 **On screen:** `docs/architecture.svg`, full frame, then the thesis card.
 
-> "Cloud Run, Cloud Tasks, Firestore, Gemini on Vertex AI, built on Google's
-> Agent Development Kit. Three agents investigate and verify. One deterministic
-> engine decides.
+> "Cloud Run, Cloud Tasks, Firestore, and Gemini on Vertex AI through the Google
+> Gen AI SDK, served from a Google ADK application. Three agents investigate and
+> verify. One deterministic engine decides.
 >
 > Less outreach. Better reasons."
 
@@ -195,11 +208,12 @@ the evidence chain top to bottom.
 | 1 | Title / thesis cards | Slide | Brand orange on light |
 | 2 | Command Centre | Product | |
 | 3 | New Task: work → team → settings → instruction | Product | Hold on the Matcher card |
-| 4 | **Launch → COMPLETED** | Product | **One unbroken take.** Uniform 3× |
+| 4 | **Launch → COMPLETED**, fresh run | Product | **One unbroken take.** Uniform 3×, labelled throughout |
 | 5 | Cloud Run service + revision | Console | Show private / not publicly invocable |
 | 6 | Cloud Tasks queue | Console | Name, region, concurrency 5 |
 | 7 | Cloud Run logs | Console | 1 + 10 + 1 × `200`, no retries |
-| 8 | Results, rejection headline | Product | The 27-of-30 beat |
+| 8 | **Visible transition** to run `5fc062f1…` | Product | Through the task list, on camera |
+| 8b | Results, rejection headline | Product | The 27-of-30 beat, in the accepted run |
 | 9 | Spanish toggle | Product | ~3s |
 | 10 | Evidence chain → DO NOT CONTACT | Product | The money shot |
 | 11 | `UNRESOLVED` case | Product | Optional |
@@ -212,8 +226,13 @@ the evidence chain top to bottom.
 - Hide bookmarks, personal tabs, notification banners and any account name.
 - **Never show the Google Cloud billing page, a project selector with other
   projects, an access token, or a terminal with credentials.**
-- The `3× speed` badge stays on screen for the whole execution clip.
+- The `3× playback — continuous uncut production run` label stays on screen for
+  the whole execution clip.
+- Never imply the accepted run is the fresh run. The transition between them is
+  shown, not hidden.
 - Narrate in English throughout. Spanish is a visual beat only.
 - Say "one observed run", not "typically" or "always", about the timings.
+- Do not say the specialists "are ADK agents". They call Gemini on Vertex AI
+  through the Google Gen AI SDK, inside an ADK application.
 - Do not say "Gemini decided" about the Opportunity Matcher — the entire
   differentiator is that it did not.
