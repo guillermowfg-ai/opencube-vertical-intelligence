@@ -305,6 +305,29 @@ agent-invocation route is `POST /run`, which is distinct from `POST /runs`.
 | Model access | Gemini via Vertex AI |
 | Container | `python:3.12-slim`, `uv sync --frozen`, uvicorn on `:8080` |
 
+### The second service: hosted Judge Mode
+
+Public read-only access is a **separate Cloud Run service**, never a mode of the
+one above.
+
+| Component | Value |
+|---|---|
+| Cloud Run service | `opencube-intel-judge` (`us-east1`) |
+| URL | <https://opencube-intel-judge-djgg4gps5q-ue.a.run.app> |
+| Entrypoint | `app/judge_app.py` — GET routes only, no mutating route registered |
+| Interface | the same bundle, compiled `VITE_EXECUTION_MODE=readonly` |
+| Runtime identity | dedicated service account, Firestore **viewer** only |
+| Data | the real Firestore records — no fixtures, no copies |
+| Public access | Cloud Run invoker IAM check disabled on this service only |
+
+The organisation enforces Domain Restricted Sharing, which refuses an `allUsers`
+IAM binding; disabling the invoker check on this one service is the supported
+way to publish it without weakening that policy. Nothing about the private core
+changes: it keeps its invoker IAM check, its sole `run.invoker` binding, and its
+`opencube-intel-00002-mk2` revision. The judge identity holds no Vertex AI role,
+no Cloud Tasks role, and no `run.invoker` anywhere, so the public service cannot
+call a model, enqueue a task, start a run, or reach the production core.
+
 Per-task dispatch deadlines are frozen at 300 s (SCOUT), 600 s (BUSINESS) and
 1800 s (FINALIZE); Cloud Run's request timeout must be at least the largest of
 these.

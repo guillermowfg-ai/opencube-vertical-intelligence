@@ -11,6 +11,9 @@ contact this business about this*.
 
 Built for the Google All Things Agentic Hackathon — **Taskmaster** category.
 
+**Try it — no account, nothing to install:** <https://opencube-intel-judge-djgg4gps5q-ue.a.run.app>
+Read-only Judge Mode, serving the real completed production runs.
+
 Repository: <https://github.com/guillermowfg-ai/opencube-vertical-intelligence>
 
 <!-- Screenshot: docs/images/command-center.png — the Command Centre with a task running -->
@@ -482,14 +485,30 @@ account. The `X-CloudTasks-TaskName` check in the handlers is hygiene that makes
 an accidental hand-rolled call obvious — it is trivially spoofable and is never
 the access control.
 
-The public judge experience is a **read-only** view of the completed real
-production run. That is an intentional deployment boundary, not a limitation of
-the system: every run invokes paid model, API and cloud resources, so an
-unauthenticated public `POST` endpoint would be an open invitation to
-uncontrolled consumption of paid AI and cloud resources. The code path already
-exists — `VITE_EXECUTION_MODE=readonly` removes the launch action and makes the
-client's only write refuse — so read-only mode changes one variable and nothing
-else.
+### Hosted Judge Mode — <https://opencube-intel-judge-djgg4gps5q-ue.a.run.app>
+
+A **second, separate** Cloud Run service serving the same interface over the
+real completed production data, read-only. Starting a task is not disabled
+there so much as absent, at four independent layers:
+
+- **The interface** is compiled with `VITE_EXECUTION_MODE=readonly`, which is a
+  build-time constant — the launch request is eliminated from the bundle, not
+  hidden in it.
+- **The server** (`app/judge_app.py`) registers only `GET` routes. `POST /runs`
+  and the three `/tasks/*` handlers are never registered, so they answer `404`
+  rather than `401`, and a method guard refuses every non-read verb before
+  routing.
+- **The runtime identity** is a dedicated service account holding Firestore
+  *viewer* and nothing else — no Vertex AI, no Cloud Tasks, no ability to
+  invoke the production service. A route bug could not spend money.
+- **The private core is untouched.** `opencube-intel` still requires IAM
+  authentication; anonymous requests to it get `403`.
+
+Public access is granted by disabling the Cloud Run invoker IAM check **on the
+judge service only** — the organisation enforces Domain Restricted Sharing, so
+an `allUsers` binding is refused, and no organisation policy was changed to work
+around it. There is no `allUsers` or `allAuthenticatedUsers` binding anywhere in
+the project.
 
 Product Mode, with execution enabled, is the authenticated experience.
 

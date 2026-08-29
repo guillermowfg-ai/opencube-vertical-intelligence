@@ -212,6 +212,9 @@ merges disagreement — each is a small lie of implication. We removed them.
 
 ## Testing instructions
 
+**Fastest path — nothing to install:** open <https://opencube-intel-judge-djgg4gps5q-ue.a.run.app>. It is the real product
+serving the real completed production runs, read-only.
+
 **No Google Cloud account, no cost — the full interface in two commands.** A
 fixture server serves the real API routers over an in-memory store, and every
 decision in it is produced by the real Matcher, so the UI is exercised against
@@ -242,13 +245,19 @@ The production Cloud Run service is **private** — there is no `allUsers` bindi
 only the runtime service account holds `run.invoker` scoped to that one service,
 and Cloud Tasks signs every internal delivery with an OIDC token.
 
-The public judge experience is a **read-only** view of the completed real
-production run. This is an intentional deployment boundary, not a limitation:
-every run invokes paid model, API and cloud resources, so an unauthenticated
-public execution endpoint would allow uncontrolled consumption of paid AI and
-cloud infrastructure. The read-only mode is a single environment variable
-(`VITE_EXECUTION_MODE=readonly`) that removes the launch action and makes the
-client's only write refuse — the same build, one flag.
+Hosted Judge Mode — <https://opencube-intel-judge-djgg4gps5q-ue.a.run.app> — is a **separate** Cloud Run service serving the
+real completed production data, read-only. Launching a task is absent rather
+than disabled, at four layers: the bundle is compiled read-only so the write is
+eliminated at build time; the judge server registers only `GET` routes, so
+`POST /runs` and the `/tasks/*` handlers answer `404` rather than `401`; its
+runtime identity holds Firestore *viewer* and nothing else — no Vertex AI, no
+Cloud Tasks, no way to invoke the production service; and the private core keeps
+its IAM check, answering `403` to anonymous callers.
+
+Public access came from disabling the Cloud Run invoker IAM check on the judge
+service alone. The organisation enforces Domain Restricted Sharing, so an
+`allUsers` binding is refused — and no organisation policy was relaxed to get
+around it.
 
 Everything a judge needs to evaluate the system is visible without executing
 anything: the full source, the decision log, the architecture, and the real run's
@@ -284,4 +293,4 @@ throughout development.
 - **Architecture:** `docs/architecture.md`
 - **Decision log:** `DECISIONS.md`
 - **Demo video:** *(to record — see `docs/video-plan.md`)*
-- **Hosted judge view:** *(read-only deployment — pending)*
+- **Hosted judge view (read-only):** <https://opencube-intel-judge-djgg4gps5q-ue.a.run.app>

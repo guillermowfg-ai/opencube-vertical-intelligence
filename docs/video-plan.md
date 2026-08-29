@@ -7,6 +7,10 @@ yet.**
 - **Primary language:** English. The Spanish UI appears briefly as a product
   capability, not as narration.
 - **Format:** screen recording of the real product, voice-over narration.
+- **Hosted Judge Mode:** <https://opencube-intel-judge-djgg4gps5q-ue.a.run.app> — read-only, real production data. Record the
+  fresh live run against Product Mode (the results half can be walked here
+  instead, if that is easier to film); never imply the public URL can launch a
+  task, because it cannot.
 
 ---
 
