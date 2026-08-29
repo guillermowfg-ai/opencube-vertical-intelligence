@@ -265,14 +265,17 @@ results with their complete evidence chains.
 
 ## New-project disclosure
 
-**OpenCube Studio** is a pre-existing business and brand — the AI-automation
-practice whose prospecting friction this product addresses, and the source of the
-logo asset. The brand context predates the hackathon.
+This project is submitted by **Guillermo Paz** as an individual entrant.
 
-**OpenCube Intel — this repository, this codebase and the submitted
-implementation — was designed and built during the hackathon submission
-period**, evidenced by the repository's Git history: initial commit 23 August
-2026, 26 commits, no pre-existing application code imported.
+OpenCube Studio is the pre-existing brand I operate under — the AI-automation
+practice whose prospecting friction this product addresses, and the source of
+the logo asset. That brand context predates the hackathon.
+
+**OpenCube Intel — including the submitted codebase and implementation — was
+designed and built by me, Guillermo Paz, during the hackathon submission
+period.** The repository's Git history evidences it: the initial commit is
+dated 23 August 2026, every commit falls inside the submission period, and no
+pre-existing application code was imported.
 
 Standard open-source libraries and frameworks were used as dependencies (the
 Google Gen AI SDK, Google ADK, FastAPI, Pydantic, React, Vite, Tailwind). The
