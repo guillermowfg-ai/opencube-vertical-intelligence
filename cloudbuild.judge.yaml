@@ -9,17 +9,30 @@
 # Build context is the repository root, because the image needs both the
 # backend and the interface. `.gcloudignore` keeps local state, node_modules,
 # .venv and every .env out of the upload.
-
-substitutions:
-  _IMAGE: us-east1-docker.pkg.dev/${PROJECT_ID}/cloud-run-source-deploy/opencube-intel-judge:latest
+#
+# Run with the dedicated build identity, which holds roles/run.builder and
+# nothing else:
+#
+#   gcloud builds submit --config=cloudbuild.judge.yaml \
+#     --service-account=projects/PROJECT/serviceAccounts/opencube-intel-build@PROJECT.iam.gserviceaccount.com .
+#
+# CLOUD_LOGGING_ONLY is required for a user-specified build service account:
+# without it Cloud Build wants a logs bucket the build identity would need
+# storage write on, and roles/run.builder deliberately does not grant that.
 
 steps:
   - name: gcr.io/cloud-builders/docker
     id: build
-    args: ["build", "-f", "Dockerfile.judge", "-t", "${_IMAGE}", "."]
+    args:
+      - build
+      - -f
+      - Dockerfile.judge
+      - -t
+      - us-east1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/opencube-intel-judge:latest
+      - .
 
 images:
-  - "${_IMAGE}"
+  - us-east1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/opencube-intel-judge:latest
 
 timeout: 1800s
 
