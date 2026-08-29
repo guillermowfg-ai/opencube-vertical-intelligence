@@ -47,10 +47,16 @@ describe("the team", () => {
     expect(TEAM.map((m) => m.step)).toEqual([1, 2, 3, 4]);
   });
 
-  it("labels the Matcher a decision engine, never an AI agent", () => {
+  it("labels only the two model-using specialists AI agents", () => {
+    // The Matcher runs a fixed table and the Scout only searches and filters;
+    // neither makes a model call, so neither may be labelled an AI agent.
     expect(teamMember("opportunity_matcher").kind).toBe("engine");
-    for (const id of ["market_scout", "business_investigator", "verification_agent"] as const) {
+    expect(teamMember("market_scout").kind).toBe("discovery");
+    for (const id of ["business_investigator", "verification_agent"] as const) {
       expect(teamMember(id).kind).toBe("agent");
+    }
+    for (const dict of [en, es]) {
+      expect(dict.team.kindHelp.discovery.toLowerCase()).toMatch(/no language model|sin modelo/);
     }
     // And the words match the distinction, in both languages.
     expect(en.team.kind.engine).not.toBe(en.team.kind.agent);

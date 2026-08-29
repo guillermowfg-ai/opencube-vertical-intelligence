@@ -1,6 +1,8 @@
-/** Geometry, not mascots: an open cube for the agents, a fixed lattice for the
- * deterministic engine. */
-export function MemberGlyph({ kind }: { kind: "agent" | "engine" }) {
+import type { TeamMemberKind } from "../product/team";
+
+/** Geometry, not mascots: an open cube for discovery and the model agents, a
+ * fixed lattice for the deterministic engine. */
+export function MemberGlyph({ kind }: { kind: TeamMemberKind }) {
   if (kind === "engine") {
     return (
       <svg viewBox="0 0 24 24" aria-hidden="true" className="size-5">

@@ -53,9 +53,9 @@ The system's job is not to produce leads. It is to destroy reasons that do not
 survive contact with evidence, and to hand a human the few that do — with the
 sources attached.
 
-This came out of running the outreach side of OpenCube Studio, an AI-automation
-practice working with local service businesses. The friction it removes is
-friction we had.
+This came out of running the outreach side of OpenCube Studio, the
+AI-automation practice I operate, working with local service businesses. The
+friction it removes is friction I had.
 
 ## What OpenCube Intel does
 
@@ -64,9 +64,9 @@ Cloud, without you watching:
 
 | | Specialist | Type | What it does |
 |---|---|---|---|
-| 1 | **Market Scout** | AI agent | Searches a market neighbourhood by neighbourhood via the Places API, filters deterministically to the target county, and selects a shortlist — without ever looking at website content, so it cannot prefer businesses that look like they'll produce an interesting answer. |
-| 2 | **Business Investigator** | AI agent | Reads each business's own public pages and records plain observations, each tied to the URL it came from. Evidence and interpretation are stored as separate records. |
-| 3 | **Verification Agent** | AI agent | Goes looking for what sources the business *does not control* say about the same claim. A business can never be its own second opinion. |
+| 1 | **Market Scout** | Autonomous discovery — **no model call** | Searches a market neighbourhood by neighbourhood via the Places API, filters deterministically to the target county, and selects a shortlist — without ever looking at website content, so it cannot prefer businesses that look like they'll produce an interesting answer. |
+| 2 | **Business Investigator** | Gemini AI specialist | Reads each business's own public pages and records plain observations, each tied to the URL it came from. Evidence and interpretation are stored as separate records. |
+| 3 | **Verification Agent** | Gemini AI specialist | Goes looking for what sources the business *does not control* say about the same claim. A business can never be its own second opinion. |
 | 4 | **Opportunity Matcher** | **Deterministic decision engine** | Puts the two side by side and applies a fixed 18-cell table. Same evidence in, same answer out. |
 
 <!-- Screenshot: docs/images/team.png — the Team screen -->
@@ -223,11 +223,12 @@ in [`DECISIONS.md`](DECISIONS.md).
 different layers, and it is worth being precise about which does what.
 
 - **Google Gen AI SDK** (`google-genai`) — **the framework the OpenCube
-  analytical specialists are built on.** Market Scout, the Business
-  Investigator and the Verification Agent call Gemini
-  (`gemini-3.6-flash`) through **Vertex AI** using this SDK, with response
-  schemas constraining every analytical output. The Gen AI SDK is itself one of
-  the hackathon's accepted Google agent frameworks.
+  reasoning specialists are built on.** The Business Investigator and the
+  Verification Agent call Gemini (`gemini-3.6-flash`) through **Vertex AI**
+  using this SDK, with response schemas constraining every analytical output.
+  The Gen AI SDK is itself one of the hackathon's accepted Google agent
+  frameworks. Market Scout makes no model call — it discovers through the
+  Places API and filters deterministically.
 - **Google ADK** (`google-adk`) — **the application and runtime layer.** The
   project was scaffolded with `google-agents-cli` (v1.4.0), and the service
   runs as an ADK FastAPI application (`get_fast_api_app`) with ADK's runner,
@@ -573,7 +574,7 @@ the logo in `design-references/`. That brand context predates the hackathon.
 designed and built by me, Guillermo Paz, during the hackathon submission
 period.** The repository's Git history evidences it: the initial commit is
 dated 23 August 2026, every commit falls inside the submission period, and no
-pre-existing application code was imported.
+pre-existing OpenCube Intel application code was imported.
 
 Standard open-source libraries and frameworks were used as dependencies (the
 Google Gen AI SDK, Google ADK, FastAPI, Pydantic, React, Vite, Tailwind), and

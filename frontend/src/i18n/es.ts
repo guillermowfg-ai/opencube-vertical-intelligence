@@ -311,10 +311,13 @@ export const es: Dictionary = {
   team: {
     title: "Tu equipo",
     kind: {
+      discovery: "Descubrimiento autónomo",
       agent: "Agente de IA",
       engine: "Motor de decisión",
     },
     kindHelp: {
+      discovery:
+        "Sin modelo de lenguaje. Busca en un directorio de negocios y filtra los resultados con reglas fijas.",
       agent: "Lee y razona sobre fuentes reales usando un modelo de lenguaje.",
       engine:
         "Sin modelo de lenguaje. Un conjunto fijo de reglas que da la misma respuesta ante la misma evidencia, siempre.",

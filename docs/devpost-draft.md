@@ -31,9 +31,10 @@ Taskmaster
 ## Elevator pitch
 
 You assign a market-opportunity task and close the tab. Four specialists execute
-it in the background on Google Cloud: three AI agents that discover, investigate
-and independently verify, and one deterministic decision engine — no model at
-all — that decides whether the evidence adds up. Most of the time it decides it
+it in the background on Google Cloud: an autonomous discovery worker, two
+Gemini specialists that investigate and independently verify, and one
+deterministic decision engine — no model at all — that decides whether the
+evidence adds up. Most of the time it decides it
 doesn't, and says so with the sources attached.
 
 ---
@@ -53,9 +54,9 @@ a more convincing wrong guess — and the cost of being wrong isn't a wasted
 email, it's a business owner who now associates your name with someone who
 invented a problem to sell them something.
 
-This is friction from running the outreach side of OpenCube Studio, an
-AI-automation practice working with local service businesses. It was not
-invented for a hackathon.
+This is friction from running the outreach side of OpenCube Studio, the
+AI-automation practice I operate, working with local service businesses. It was
+not invented for a hackathon.
 
 ## What it does
 
@@ -65,14 +66,14 @@ identify a potential fit.
 
 You assign a task to a team of four:
 
-1. **Market Scout** *(AI agent)* — searches a market neighbourhood by
+1. **Market Scout** *(autonomous discovery — no model call)* — searches a market neighbourhood by
    neighbourhood via the Places API and filters deterministically to the target
    county. Selection never inspects website content, so it can't prefer
    businesses likely to produce an interesting answer.
-2. **Business Investigator** *(AI agent)* — reads each business's own public
+2. **Business Investigator** *(Gemini AI specialist)* — reads each business's own public
    pages and records observations tied to the URL they came from. Evidence and
    interpretation are stored separately.
-3. **Verification Agent** *(AI agent)* — finds what sources the business does
+3. **Verification Agent** *(Gemini AI specialist)* — finds what sources the business does
    *not* control say about the same claim. A business can never be its own
    second opinion.
 4. **Opportunity Matcher** *(deterministic decision engine — not an LLM)* — puts
@@ -107,10 +108,11 @@ finalize task. Firestore is the canonical workflow state — nothing in the
 asynchronous path touches in-memory session state, so any instance can serve any
 task and an instance dying loses nothing.
 
-**Two Google agent frameworks, at two layers.** The analytical specialists —
-Market Scout, Business Investigator, Verification Agent — are built on the
-**Google Gen AI SDK** (`google-genai`), calling Gemini through **Vertex AI**
-with response schemas constraining every output. The Gen AI SDK is one of the
+**Two Google agent frameworks, at two layers.** The two reasoning specialists —
+Business Investigator and Verification Agent — are built on the **Google Gen AI
+SDK** (`google-genai`), calling Gemini (`gemini-3.6-flash`) through **Vertex
+AI** with response schemas constraining every output. Market Scout makes no
+model call: it discovers through the Places API and filters deterministically. The Gen AI SDK is one of the
 hackathon's accepted Google agent frameworks. **Google ADK** is the application
 and runtime layer: the project was scaffolded with `google-agents-cli`, and the
 service runs as an ADK FastAPI application with ADK's runner, session and
@@ -275,7 +277,7 @@ the logo asset. That brand context predates the hackathon.
 designed and built by me, Guillermo Paz, during the hackathon submission
 period.** The repository's Git history evidences it: the initial commit is
 dated 23 August 2026, every commit falls inside the submission period, and no
-pre-existing application code was imported.
+pre-existing OpenCube Intel application code was imported.
 
 Standard open-source libraries and frameworks were used as dependencies (the
 Google Gen AI SDK, Google ADK, FastAPI, Pydantic, React, Vite, Tailwind). The

@@ -325,10 +325,13 @@ export const en = {
   team: {
     title: "Your team",
     kind: {
+      discovery: "Autonomous discovery",
       agent: "AI agent",
       engine: "Decision engine",
     },
     kindHelp: {
+      discovery:
+        "No language model. Searches a business directory and filters the results by fixed rules.",
       agent: "Reads and reasons over real sources using a language model.",
       engine:
         "No language model at all. A fixed set of rules that gives the same answer for the same evidence, every time.",

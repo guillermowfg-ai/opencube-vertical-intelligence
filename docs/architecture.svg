@@ -99,18 +99,18 @@
   <g>
     <rect x="130" y="496" width="240" height="130" rx="10" fill="#FFFFFF" stroke="#DDD6CC"/>
     <text class="ff box-title" x="148" y="522">1 · Market Scout</text>
-    <text class="ff box-kind" x="148" y="540">AI AGENT</text>
+    <text class="ff box-kind" x="148" y="540">AUTONOMOUS DISCOVERY</text>
     <text class="ff box-sub" x="148" y="562">5 submarket queries</text>
     <text class="ff box-sub" x="148" y="580">40 raw → 10 selected</text>
     <text class="ff box-sub" x="148" y="598">outcome-blind selection</text>
-    <rect x="148" y="606" width="104" height="16" rx="8" fill="#EEF3FA" stroke="#D6E1F0"/>
-    <text class="ff chip-text" x="158" y="617">PLACES API</text>
+    <rect x="148" y="606" width="150" height="16" rx="8" fill="#EEF3FA" stroke="#D6E1F0"/>
+    <text class="ff chip-text" x="158" y="617">PLACES API · NO MODEL</text>
   </g>
 
   <g>
     <rect x="390" y="496" width="240" height="130" rx="10" fill="#FFFFFF" stroke="#DDD6CC"/>
     <text class="ff box-title" x="408" y="522">2 · Business Investigator</text>
-    <text class="ff box-kind" x="408" y="540">AI AGENT</text>
+    <text class="ff box-kind" x="408" y="540">GEMINI AI SPECIALIST</text>
     <text class="ff box-sub" x="408" y="562">reads the business's own</text>
     <text class="ff box-sub" x="408" y="580">public pages · 1 task each</text>
     <text class="ff box-sub" x="408" y="598">evidence, then hypothesis</text>
@@ -121,7 +121,7 @@
   <g>
     <rect x="650" y="496" width="240" height="130" rx="10" fill="#FFFFFF" stroke="#DDD6CC"/>
     <text class="ff box-title" x="668" y="522">3 · Verification Agent</text>
-    <text class="ff box-kind" x="668" y="540">AI AGENT</text>
+    <text class="ff box-kind" x="668" y="540">GEMINI AI SPECIALIST</text>
     <text class="ff box-sub" x="668" y="562">independent sources only</text>
     <text class="ff box-sub" x="668" y="580">discovery and reasoning</text>
     <text class="ff box-sub" x="668" y="598">are separate calls</text>
@@ -197,7 +197,7 @@
     <text class="ff legend" x="152" y="906">Google Cloud managed service</text>
 
     <rect x="360" y="895" width="14" height="14" rx="4" fill="#FFFFFF" stroke="#DDD6CC"/>
-    <text class="ff legend" x="382" y="906">Generative agent — reasons over sources with Gemini</text>
+    <text class="ff legend" x="382" y="906">Gemini specialist — reasons over sources (agents 2 and 3 only)</text>
 
     <rect x="700" y="895" width="14" height="14" rx="4" fill="#FFFFFF" stroke="#E2600A" stroke-width="2"/>
     <text class="ff legend" x="722" y="906">Deterministic decision engine — no model, fully auditable</text>

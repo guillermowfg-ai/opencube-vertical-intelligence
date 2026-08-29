@@ -18,7 +18,7 @@ Four layers, and the boundaries between them are the point.
 | Layer | What lives there | Why the boundary matters |
 |---|---|---|
 | **User / product** | The OpenCube Intel React interface | The operator assigns a task and reads evidence. It never decides anything. |
-| **Agentic execution** | Market Scout, Business Investigator, Verification Agent, Opportunity Matcher | Three specialists reason with a model. The fourth does not — and must not. |
+| **Agentic execution** | Market Scout, Business Investigator, Verification Agent, Opportunity Matcher | Two specialists reason with a model. The other two do not — and must not. |
 | **Google Cloud** | Cloud Run, Cloud Tasks, Vertex AI, Places API | Background execution, identity, and the model. |
 | **Data / decision** | Firestore | The single canonical record of what happened and why. |
 
@@ -42,9 +42,9 @@ flowchart TB
     end
 
     subgraph AGENTS["AGENTIC EXECUTION"]
-        SCOUT["1 · Market Scout<br/><i>AI agent</i>"]
-        INV["2 · Business Investigator<br/><i>AI agent · one Cloud Task per business</i>"]
-        VER["3 · Verification Agent<br/><i>AI agent · independent sources only</i>"]
+        SCOUT["1 · Market Scout<br/><b>NO MODEL CALL</b> · Places API"]
+        INV["2 · Business Investigator<br/><i>Gemini AI specialist · one Cloud Task per business</i>"]
+        VER["3 · Verification Agent<br/><i>Gemini AI specialist · independent sources only</i>"]
         MATCH["4 · Opportunity Matcher<br/><b>DETERMINISTIC — no model</b>"]
     end
 
@@ -115,15 +115,18 @@ Opportunity Matcher over *every* hypothesis, and writes the terminal Run state.
 
 ## 4. The four specialists
 
-Three of them reason with a model; the fourth does not. The three that do are
-built on the **Google Gen AI SDK** (`google-genai`), calling Gemini through
-Vertex AI with response schemas — they are not ADK `Agent` instances. ADK is the
-layer beneath them: the FastAPI application they are served from, its runner and
-session services, and its Cloud Trace export. The ADK scaffold's sample
-`root_agent` in `app/agent.py` is retained as generated and takes no part in a
-production run.
+**Two of the four reason with a model, not three.** The Business Investigator
+and the Verification Agent are built on the **Google Gen AI SDK**
+(`google-genai`), calling Gemini (`gemini-3.6-flash`) through Vertex AI with
+response schemas — they are not ADK `Agent` instances. Market Scout makes no
+model call at all, and the Opportunity Matcher makes none by design.
 
-### 1 · Market Scout — AI agent
+ADK is the layer beneath all of them: the FastAPI application they are served
+from, its runner and session services, and its Cloud Trace export. The ADK
+scaffold's sample `root_agent` in `app/agent.py` is retained as generated and
+takes no part in a production run.
+
+### 1 · Market Scout — autonomous discovery, no model call
 Discovers real businesses through the Places API (New) and filters them
 deterministically: valid place ID, a name, inside the target county,
 deduplicated, a public website present, then round-robin across submarkets so
@@ -131,7 +134,7 @@ one neighbourhood cannot dominate. Selection is outcome-blind — it never
 inspects website content, so it cannot prefer businesses that look like they
 will produce an interesting result.
 
-### 2 · Business Investigator — AI agent
+### 2 · Business Investigator — Gemini AI specialist
 Reads what the business itself publishes and records plain observations tied to
 a source URL. Its output is two separate things, deliberately: `Evidence`
 (factual observations with provenance) and `OpportunityHypothesis`
@@ -139,7 +142,7 @@ a source URL. Its output is two separate things, deliberately: `Evidence`
 and is explicitly forbidden from substituting a different one when the supplied
 one fails.
 
-### 3 · Verification Agent — AI agent
+### 3 · Verification Agent — Gemini AI specialist
 Looks for what sources *outside* the business say about the same claim. This is
 two Gemini calls, never one: the first uses Google Search grounding for source
 discovery only — its prose is never persisted as Evidence — and the second

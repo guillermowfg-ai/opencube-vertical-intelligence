@@ -89,10 +89,12 @@ card, where it reads **Decision engine — no language model at all**.
 
 > "OpenCube Intel is not a chatbot. You assign a task to a team.
 >
-> Three of them are AI agents. The fourth — the one that actually decides
-> whether a business gets contacted — is not a model at all. It's a fixed set of
-> rules that gives the same answer for the same evidence, every time. That's
-> deliberate: models investigate, deterministic policy decides."
+> Two of them reason with Gemini — the one that investigates, and the one that
+> checks the findings against outside sources. The first just searches and
+> filters. And the fourth — the one that actually decides whether a business
+> gets contacted — is not a model at all. It's a fixed set of rules that gives
+> the same answer for the same evidence, every time. That's deliberate: models
+> investigate, deterministic policy decides."
 
 Continue through Task configuration and the written-out instruction.
 
@@ -198,8 +200,9 @@ what our research found, what an outside source said, and whether we can act.
 **On screen:** `docs/architecture.svg`, full frame, then the thesis card.
 
 > "Cloud Run, Cloud Tasks, Firestore, and Gemini on Vertex AI through the Google
-> Gen AI SDK, served from a Google ADK application. Three agents investigate and
-> verify. One deterministic engine decides.
+> Gen AI SDK, served from a Google ADK application. One worker discovers, two
+> Gemini specialists investigate and verify, and one deterministic engine
+> decides.
 >
 > Less outreach. Better reasons."
 

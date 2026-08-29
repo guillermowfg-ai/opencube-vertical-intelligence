@@ -2,14 +2,19 @@
  * The OpenCube Intelligence team.
  *
  * Each member is a real stage of the pipeline, not a persona invented for the
- * interface. The `kind` field matters: the Opportunity Matcher is a
- * deterministic decision engine, not a language model, and labelling it as an
- * agent would misrepresent the one part of the system that is provably
- * repeatable. That distinction is a product strength, so it is in the data
- * model rather than left to whoever writes a card.
+ * interface. The `kind` field matters, and there are three of them because
+ * exactly three things happen here.
+ *
+ * Only the Investigator and the Verification Agent reason with a language
+ * model. The Market Scout makes no model call at all -- it searches a business
+ * directory and filters the results by fixed rules -- and the Opportunity
+ * Matcher is a deterministic decision engine. Calling either of those an "AI
+ * agent" would misrepresent the two parts of the system that are provably
+ * repeatable, which is a product strength, so the distinction lives in the data
+ * model rather than being left to whoever writes a card.
  */
 
-export type TeamMemberKind = "agent" | "engine";
+export type TeamMemberKind = "discovery" | "agent" | "engine";
 
 export interface TeamMember {
   id: TeamMemberId;
@@ -28,7 +33,8 @@ export type TeamMemberId =
   | "opportunity_matcher";
 
 export const TEAM: TeamMember[] = [
-  { id: "market_scout", kind: "agent", step: 1, phase: "DISCOVERING" },
+  // No model call: a business-directory search plus deterministic filtering.
+  { id: "market_scout", kind: "discovery", step: 1, phase: "DISCOVERING" },
   { id: "business_investigator", kind: "agent", step: 2, phase: "INVESTIGATING" },
   { id: "verification_agent", kind: "agent", step: 3, phase: "FINALIZING" },
   // Deterministic: a fixed lookup table, zero model calls. Never an agent.
